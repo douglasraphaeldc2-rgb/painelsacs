@@ -1,0 +1,3305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DASHBOARD - Controle de Notificações</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        
+        body {
+            box-sizing: border-box;
+            font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Animações de entrada */
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes fadeInScale {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        @keyframes shimmer {
+            0% {
+                background-position: -200px 0;
+            }
+            100% {
+                background-position: calc(200px + 100%) 0;
+            }
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+        
+        @keyframes glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(0, 147, 208, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(0, 147, 208, 0.6);
+            }
+        }
+        
+        .animate-slide-up {
+            animation: slideInUp 0.6s ease-out;
+        }
+        
+        .animate-fade-scale {
+            animation: fadeInScale 0.5s ease-out;
+        }
+        
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .animate-glow {
+            animation: glow 2s ease-in-out infinite;
+        }
+        
+        .widget-card {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            border: 1px solid rgba(0, 75, 141, 0.1);
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 40px rgba(0, 75, 141, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .widget-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -200px;
+            width: 200px;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            transition: left 0.5s;
+        }
+        
+        .widget-card:hover::before {
+            left: 100%;
+        }
+        
+        .widget-card:hover {
+            transform: translateY(-12px) scale(1.03);
+            box-shadow: 0 30px 60px rgba(0, 75, 141, 0.2), 0 0 0 1px rgba(0, 147, 208, 0.3);
+            border-color: rgba(0, 147, 208, 0.4);
+        }
+        .tab-active {
+            background: linear-gradient(135deg, #004B8D 0%, #0093D0 100%);
+            color: white;
+            box-shadow: 0 8px 25px rgba(0, 75, 141, 0.4);
+            transform: translateY(-2px);
+            border: 1px solid rgba(0, 147, 208, 0.3);
+        }
+        .tab-inactive {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #64748b;
+            border: 1px solid rgba(0, 75, 141, 0.1);
+        }
+        .tab-inactive:hover {
+            background: linear-gradient(135deg, rgba(0, 147, 208, 0.05) 0%, rgba(0, 179, 166, 0.05) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 75, 141, 0.1);
+            border-color: rgba(0, 147, 208, 0.2);
+        }
+        .progress-bar {
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            background: linear-gradient(90deg, #00B3A6 0%, #0093D0 100%);
+        }
+        .status-badge {
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.8; }
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #004B8D 0%, #0093D0 50%, #00B3A6 100%);
+            position: relative;
+        }
+        
+        .gradient-bg::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 50%, rgba(255,255,255,0.1) 100%);
+            animation: shimmer 3s ease-in-out infinite;
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 15px 50px rgba(0, 75, 141, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+            position: relative;
+        }
+        
+        .glass-effect::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.8), transparent);
+        }
+        .icon-glow {
+            filter: drop-shadow(0 0 8px rgba(0, 147, 208, 0.3));
+        }
+        .table-row:hover {
+            background: linear-gradient(90deg, rgba(0, 147, 208, 0.05) 0%, rgba(0, 179, 166, 0.02) 100%);
+            transform: scale(1.01);
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            background: linear-gradient(135deg, #004B8D 0%, #0093D0 100%);
+            box-shadow: 0 6px 20px rgba(0, 75, 141, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-primary:hover::before {
+            left: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 75, 141, 0.5);
+            background: linear-gradient(135deg, #003d73 0%, #007bb8 100%);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #00B3A6 0%, #0093D0 100%);
+            box-shadow: 0 6px 20px rgba(0, 179, 166, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-success::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-success:hover::before {
+            left: 100%;
+        }
+        
+        .btn-success:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 179, 166, 0.5);
+            background: linear-gradient(135deg, #009b8f 0%, #007bb8 100%);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #F9B233 0%, #e09900 100%);
+            box-shadow: 0 6px 20px rgba(249, 178, 51, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn-warning::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .btn-warning:hover::before {
+            left: 100%;
+        }
+        
+        .btn-warning:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 12px 35px rgba(249, 178, 51, 0.5);
+            background: linear-gradient(135deg, #e09900 0%, #cc8800 100%);
+        }
+        .icon-blue { color: #004B8D; }
+        .icon-light-blue { color: #0093D0; }
+        .icon-teal { color: #00B3A6; }
+        .icon-yellow { color: #F9B233; }
+        .bg-blue-gradient { background: linear-gradient(135deg, rgba(0, 75, 141, 0.1) 0%, rgba(0, 147, 208, 0.05) 100%); }
+        .bg-teal-gradient { background: linear-gradient(135deg, rgba(0, 179, 166, 0.1) 0%, rgba(0, 147, 208, 0.05) 100%); }
+        .bg-yellow-gradient { background: linear-gradient(135deg, rgba(249, 178, 51, 0.1) 0%, rgba(249, 178, 51, 0.05) 100%); }
+        .border-blue { border-color: rgba(0, 75, 141, 0.2); }
+        .border-light-blue { border-color: rgba(0, 147, 208, 0.2); }
+        .border-teal { border-color: rgba(0, 179, 166, 0.2); }
+        .border-yellow { border-color: rgba(249, 178, 51, 0.2); }
+    </style>
+</head>
+<body class="min-h-full" style="background: linear-gradient(135deg, #004B8D 0%, #0093D0 50%, #00B3A6 100%); background-attachment: fixed;">
+    <div class="w-full max-w-none px-4 py-2">
+        <!-- Header -->
+        <header class="glass-effect rounded-xl shadow-2xl p-6 mb-6 border border-white/20 animate-slide-up">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <!-- Title with integrated logo -->
+                    <div class="flex items-center space-x-4 animate-slide-up">
+                        <!-- Logo Area -->
+                        <div class="flex-shrink-0 animate-fade-scale">
+                            <div id="logoContainer" class="w-12 h-12 bg-gradient-to-br from-blue-100 via-blue-200 to-blue-300 rounded-xl flex items-center justify-center border-2 border-blue-300 shadow-xl animate-glow cursor-pointer hover:scale-105 transition-transform duration-300" onclick="document.getElementById('logoInput').click()">
+                                <!-- Default icon when no logo is uploaded -->
+                                <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                            <!-- Hidden file input for logo upload -->
+                            <input type="file" id="logoInput" accept="image/*" class="hidden" onchange="handleLogoUpload(event)">
+                        </div>
+                        
+                        <!-- Title and subtitle -->
+                        <div class="animate-slide-up" style="animation-delay: 0.2s;">
+                            <h1 class="text-2xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">DASHBOARD</h1>
+                            <p class="text-sm text-gray-600 mt-1 flex items-center">
+                                <svg class="w-4 h-4 mr-2 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-5 5v-5zM9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Controle de Notificações
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4 animate-slide-up" style="animation-delay: 0.4s;">
+                    <div class="text-right bg-gradient-to-r from-gray-50 to-gray-100 p-3 rounded-lg border border-gray-200 shadow-sm">
+                        <p class="text-xs text-gray-600 flex items-center">
+                            <svg class="w-3 h-3 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                            Última atualização
+                        </p>
+                        <p class="text-xs font-bold text-gray-800" id="lastUpdate">24/10/2025, 15:56:41</p>
+                    </div>
+                    
+
+                    
+                    <button onclick="updateDashboard()" class="btn-primary text-white px-5 py-3 rounded-xl flex items-center space-x-2 font-medium text-sm relative z-10">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                        </svg>
+                        <span>Atualizar</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="glass-effect rounded-xl shadow-xl p-3 mb-6 border border-white/20 animate-slide-up" style="animation-delay: 0.3s;">
+            <div class="flex space-x-2">
+                <button onclick="switchTab('visao-geral')" id="tab-visao-geral" class="tab-inactive px-6 py-3 rounded-xl font-medium transition-all duration-300 text-sm flex items-center space-x-2 group">
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                    </svg>
+                    <span>Visão Geral</span>
+                </button>
+                <button onclick="switchTab('performance')" id="tab-performance" class="tab-inactive px-6 py-3 rounded-xl font-medium transition-all duration-300 text-sm flex items-center space-x-2 group">
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                    </svg>
+                    <span>Performance</span>
+                </button>
+                <button onclick="switchTab('gestao')" id="tab-gestao" class="tab-active px-6 py-3 rounded-xl font-medium transition-all duration-300 text-sm flex items-center space-x-2 group">
+                    <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span>Gestão</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Content Area -->
+        <main id="content-area">
+            <!-- Visão Geral Tab -->
+            <div id="visao-geral-content" class="hidden">
+                <!-- Filtro Mês - Visão Geral -->
+                <div class="glass-effect rounded-xl shadow-xl p-4 mb-4 border border-white/20">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-800">Filtros - Visão Geral</h3>
+                        <div class="flex items-center space-x-3">
+                            <div>
+                                <label for="overviewMonthFilter" class="block text-xs font-medium text-gray-700 mb-1">Filtrar por Mês</label>
+                                <select id="overviewMonthFilter" onchange="applyOverviewFilter()" class="border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                                    <option value="">Todos os Meses</option>
+                                    <option value="0">Janeiro 2025</option>
+                                    <option value="1">Fevereiro 2025</option>
+                                    <option value="2">Março 2025</option>
+                                    <option value="3">Abril 2025</option>
+                                    <option value="4">Maio 2025</option>
+                                    <option value="5">Junho 2025</option>
+                                    <option value="6">Julho 2025</option>
+                                    <option value="7">Agosto 2025</option>
+                                    <option value="8">Setembro 2025</option>
+                                    <option value="9">Outubro 2025</option>
+                                    <option value="10">Novembro 2025</option>
+                                    <option value="11">Dezembro 2025</option>
+                                </select>
+                            </div>
+                            <button onclick="clearOverviewFilter()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-3 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-xs mt-5">
+                                Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- KPI Cards Row -->
+                <div class="grid grid-cols-6 gap-3 mb-4">
+                    <!-- Total de SACs -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.1s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Total de SACs</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="totalSacs">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-gradient rounded-xl flex items-center justify-center shadow-lg border border-light-blue animate-float">
+                                <svg class="w-6 h-6 icon-blue icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Finalizados no Prazo -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.2s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Finalizados no Prazo</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="finalizadosNoPrazo">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-teal-400 to-teal-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-teal-gradient rounded-xl flex items-center justify-center shadow-lg border border-teal animate-float" style="animation-delay: 0.5s;">
+                                <svg class="w-6 h-6 icon-teal icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Finalizados Atrasados -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.3s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Finalizados Atrasados</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="finalizadosAtrasados">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-yellow-400 to-yellow-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-gradient rounded-xl flex items-center justify-center shadow-lg border border-yellow animate-float" style="animation-delay: 1s;">
+                                <svg class="w-6 h-6 icon-yellow icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Atrasados -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.4s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Atrasados</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="atrasados">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-red-400 to-red-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-gradient-to-br from-red-100 to-red-200 rounded-xl flex items-center justify-center shadow-lg border border-red-300 animate-float" style="animation-delay: 1.5s;">
+                                <svg class="w-6 h-6 text-red-600 icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Em Tratativa -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.5s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Em Tratativa</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="emTratativa">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-blue-400 to-blue-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-gradient rounded-xl flex items-center justify-center shadow-lg border border-light-blue animate-float" style="animation-delay: 2s;">
+                                <svg class="w-6 h-6 icon-light-blue icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Total Finalizados -->
+                    <div class="widget-card bg-white rounded-xl shadow-sm p-4 animate-slide-up" style="animation-delay: 0.6s;">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-medium text-gray-600 mb-1">Total Finalizados</p>
+                                <p class="text-2xl font-bold text-gray-800 animate-fade-scale" id="totalFinalizados">0</p>
+                                <div class="w-8 h-1 bg-gradient-to-r from-teal-400 to-teal-600 rounded-full mt-2"></div>
+                            </div>
+                            <div class="w-12 h-12 bg-teal-gradient rounded-xl flex items-center justify-center shadow-lg border border-teal animate-float" style="animation-delay: 2.5s;">
+                                <svg class="w-6 h-6 icon-teal icon-glow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v6a2 2 0 002 2h2m0 0h2m0 0h2a2 2 0 002-2V7a2 2 0 00-2-2h-2m0 0V3m0 0h2m-2 0h-2"></path>
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Metrics Row -->
+                <div class="grid grid-cols-3 gap-3">
+                    <!-- Evolução Mensal -->
+                    <div class="widget-card bg-white rounded-lg shadow-sm p-4">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-3">Evolução Mensal</h3>
+                        <div class="relative h-40">
+                            <canvas id="evolucaoChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Métricas Principais -->
+                    <div class="widget-card bg-white rounded-lg shadow-sm p-4">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-3">Métricas Principais</h3>
+                        <div class="space-y-3">
+                            <!-- Taxa Resolução -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-gray-600">Taxa Resolução</span>
+                                    <span class="text-xs font-bold text-gray-800">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="progress-bar bg-green-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- Tempo Médio -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-gray-600">Tempo Médio</span>
+                                    <span class="text-xs font-bold text-gray-800">0d</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="progress-bar bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+
+                            <!-- SLA -->
+                            <div>
+                                <div class="flex justify-between items-center mb-1">
+                                    <span class="text-xs font-medium text-gray-600">SLA</span>
+                                    <span class="text-xs font-bold text-gray-800">0%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="progress-bar bg-orange-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Principais Motivos -->
+                    <div class="widget-card bg-white rounded-lg shadow-sm p-4">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-3">Principais Motivos</h3>
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-4 h-4 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                                    <span class="text-xs font-medium text-gray-700">Agendamento</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-4 h-4 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                                    <span class="text-xs font-medium text-gray-700">Resultado</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-4 h-4 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                                    <span class="text-xs font-medium text-gray-700">CLAV</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-4 h-4 bg-yellow-100 text-yellow-600 rounded-full flex items-center justify-center text-xs font-bold">4</span>
+                                    <span class="text-xs font-medium text-gray-700">NPP</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800">0</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-4 h-4 bg-red-100 text-red-600 rounded-full flex items-center justify-center text-xs font-bold">5</span>
+                                    <span class="text-xs font-medium text-gray-700">Autorização</span>
+                                </div>
+                                <span class="text-xs font-bold text-gray-800">0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Tab -->
+            <div id="performance-content" class="hidden">
+                <!-- Filtro Mês - Performance -->
+                <div class="glass-effect rounded-xl shadow-xl p-4 mb-4 border border-white/20">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-sm font-semibold text-gray-800">Filtros - Performance</h3>
+                        <div class="flex items-center space-x-3">
+                            <div>
+                                <label for="performanceMonthFilter" class="block text-xs font-medium text-gray-700 mb-1">Filtrar por Mês</label>
+                                <select id="performanceMonthFilter" onchange="applyPerformanceFilter()" class="border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                                    <option value="">Todos os Meses</option>
+                                    <option value="0">Janeiro 2025</option>
+                                    <option value="1">Fevereiro 2025</option>
+                                    <option value="2">Março 2025</option>
+                                    <option value="3">Abril 2025</option>
+                                    <option value="4">Maio 2025</option>
+                                    <option value="5">Junho 2025</option>
+                                    <option value="6">Julho 2025</option>
+                                    <option value="7">Agosto 2025</option>
+                                    <option value="8">Setembro 2025</option>
+                                    <option value="9">Outubro 2025</option>
+                                    <option value="10">Novembro 2025</option>
+                                    <option value="11">Dezembro 2025</option>
+                                </select>
+                            </div>
+                            <button onclick="clearPerformanceFilter()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-3 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-xs mt-5">
+                                Limpar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Metas e Indicadores -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <!-- Metas Mensais -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-4 h-4 icon-blue mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                            </svg>
+                            Metas Mensais
+                        </h3>
+                        
+                        <div class="space-y-3">
+                            <!-- Meta Resolução -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-semibold text-gray-700">Taxa de Resolução</span>
+                                    <div class="text-right">
+                                        <span class="text-sm font-bold text-gray-800" id="metaResolucaoValue">0%</span>
+                                        <span class="text-xs text-gray-500 block">Meta: 90%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 relative">
+                                    <div id="metaResolucaoBar" class="bg-gradient-to-r from-orange-400 to-orange-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    <div class="absolute top-0 right-0 w-1 h-2 bg-red-400 rounded-r-full" style="right: 10%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>0%</span>
+                                    <span class="text-red-500">Meta: 90%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+
+                            <!-- Meta Tempo Médio -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-semibold text-gray-700">Tempo Médio (dias)</span>
+                                    <div class="text-right">
+                                        <span class="text-sm font-bold text-gray-800" id="metaTempoValue">0</span>
+                                        <span class="text-xs text-gray-500 block">Meta: ≤ 2.0</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 relative">
+                                    <div id="metaTempoBar" class="bg-gradient-to-r from-red-400 to-red-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    <div class="absolute top-0 w-1 h-2 bg-green-400" style="left: 40%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>0d</span>
+                                    <span class="text-green-500">Meta: 2.0d</span>
+                                    <span>5d</span>
+                                </div>
+                            </div>
+
+                            <!-- Meta SLA -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-semibold text-gray-700">Cumprimento SLA</span>
+                                    <div class="text-right">
+                                        <span class="text-sm font-bold text-gray-800" id="metaSlaValue">0%</span>
+                                        <span class="text-xs text-gray-500 block">Meta: 95%</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 relative">
+                                    <div id="metaSlaBar" class="bg-gradient-to-r from-green-400 to-green-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    <div class="absolute top-0 right-0 w-1 h-2 bg-red-400 rounded-r-full" style="right: 5%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>0%</span>
+                                    <span class="text-red-500">Meta: 95%</span>
+                                    <span>100%</span>
+                                </div>
+                            </div>
+
+                            <!-- Meta Satisfação -->
+                            <div>
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="text-xs font-semibold text-gray-700">Satisfação Cliente</span>
+                                    <div class="text-right">
+                                        <span class="text-sm font-bold text-gray-800" id="metaSatisfacaoValue">0</span>
+                                        <span class="text-xs text-gray-500 block">Meta: ≥ 4.5</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-2 relative">
+                                    <div id="metaSatisfacaoBar" class="bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                                    <div class="absolute top-0 w-1 h-2 bg-green-400" style="left: 90%"></div>
+                                </div>
+                                <div class="flex justify-between text-xs text-gray-500 mt-1">
+                                    <span>1.0</span>
+                                    <span class="text-green-500">Meta: 4.5</span>
+                                    <span>5.0</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Análise de Tendências -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-bold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-4 h-4 icon-light-blue mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
+                            </svg>
+                            Análise de Tendências
+                        </h3>
+                        
+                        <div class="space-y-3">
+                            <!-- Tendência Volume -->
+                            <div class="flex items-center justify-between p-2 bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-700">Volume de SACs</p>
+                                    <p class="text-xs text-gray-500">vs. mês anterior</p>
+                                </div>
+                                <div class="flex items-center space-x-1" id="tendenciaVolume">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    <span class="text-sm font-bold text-gray-600">0%</span>
+                                </div>
+                            </div>
+
+                            <!-- Tendência Resolução -->
+                            <div class="flex items-center justify-between p-2 bg-gradient-to-r from-green-50 to-green-100 rounded-lg">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-700">Taxa Resolução</p>
+                                    <p class="text-xs text-gray-500">vs. mês anterior</p>
+                                </div>
+                                <div class="flex items-center space-x-1" id="tendenciaResolucao">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    <span class="text-sm font-bold text-gray-600">0%</span>
+                                </div>
+                            </div>
+
+                            <!-- Tendência Tempo -->
+                            <div class="flex items-center justify-between p-2 bg-gradient-to-r from-orange-50 to-orange-100 rounded-lg">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-700">Tempo Médio</p>
+                                    <p class="text-xs text-gray-500">vs. mês anterior</p>
+                                </div>
+                                <div class="flex items-center space-x-1" id="tendenciaTempo">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    <span class="text-sm font-bold text-gray-600">0%</span>
+                                </div>
+                            </div>
+
+                            <!-- Tendência Satisfação -->
+                            <div class="flex items-center justify-between p-2 bg-gradient-to-r from-yellow-50 to-yellow-100 rounded-lg">
+                                <div>
+                                    <p class="text-xs font-medium text-gray-700">Satisfação</p>
+                                    <p class="text-xs text-gray-500">vs. mês anterior</p>
+                                </div>
+                                <div class="flex items-center space-x-1" id="tendenciaSatisfacao">
+                                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                                    </svg>
+                                    <span class="text-sm font-bold text-gray-600">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Gráficos de Performance -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <!-- Gráfico Performance Mensal -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-3">Performance Mensal</h3>
+                        <div class="relative h-40">
+                            <canvas id="performanceChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Gráfico Tempo de Resolução -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-3">Tempo de Resolução por Tipo</h3>
+                        <div class="relative h-40">
+                            <canvas id="tempoChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ranking e Alertas -->
+                <div class="grid grid-cols-2 gap-3">
+                    <!-- Ranking por Tipo -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-4 h-4 icon-yellow mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                            </svg>
+                            Performance por Tipo
+                        </h3>
+                        
+                        <div class="space-y-2" id="rankingContainer">
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                                </svg>
+                                <p class="text-sm font-medium">Nenhum dado disponível</p>
+                                <p class="text-xs">Crie alguns SACs para ver o ranking</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Alertas e Ações -->
+                    <div class="glass-effect rounded-xl shadow-xl p-4 border border-white/20">
+                        <h3 class="text-sm font-semibold text-gray-800 mb-4 flex items-center">
+                            <svg class="w-4 h-4 icon-teal mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                            Alertas de Performance
+                        </h3>
+                        
+                        <div class="space-y-2" id="alertasContainer">
+                            <div class="text-center py-8 text-gray-500">
+                                <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                                </svg>
+                                <p class="text-sm font-medium">Nenhum alerta no momento</p>
+                                <p class="text-xs">Crie alguns SACs para ver alertas de performance</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+            <!-- Gestão Tab -->
+            <div id="gestao-content">
+                <!-- Filtros e Ações -->
+                <div class="glass-effect rounded-xl shadow-xl p-4 mb-4 border border-white/20">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-sm font-semibold text-gray-800">Filtros e Ações</h3>
+                        <span class="text-xs font-medium text-gray-600">Total: <span id="totalSacsCount">0</span> SACs</span>
+                    </div>
+                    
+                    <!-- Filtros -->
+                    <div class="grid grid-cols-4 gap-3 mb-4">
+                        <div>
+                            <label for="filterMonth" class="block text-xs font-medium text-gray-700 mb-1">Mês</label>
+                            <select id="filterMonth" onchange="applyFilters()" class="w-full border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                                <option value="">Todos</option>
+                                <option value="0">Janeiro 2025</option>
+                                <option value="1">Fevereiro 2025</option>
+                                <option value="2">Março 2025</option>
+                                <option value="3">Abril 2025</option>
+                                <option value="4">Maio 2025</option>
+                                <option value="5">Junho 2025</option>
+                                <option value="6">Julho 2025</option>
+                                <option value="7">Agosto 2025</option>
+                                <option value="8">Setembro 2025</option>
+                                <option value="9">Outubro 2025</option>
+                                <option value="10">Novembro 2025</option>
+                                <option value="11">Dezembro 2025</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="filterStatus" class="block text-xs font-medium text-gray-700 mb-1">Status</label>
+                            <select id="filterStatus" onchange="applyFilters()" class="w-full border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                                <option value="">Todos</option>
+                                <option value="Finalizado no Prazo">Finalizado no Prazo</option>
+                                <option value="Finalizado Atrasado">Finalizado Atrasado</option>
+                                <option value="Atrasado">Atrasado</option>
+                                <option value="Em Tratativa">Em Tratativa</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="filterType" class="block text-xs font-medium text-gray-700 mb-1">Tipo</label>
+                            <select id="filterType" onchange="applyFilters()" class="w-full border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                                <option value="">Todos</option>
+                                <option value="Agendamento">Agendamento</option>
+                                <option value="Resultado">Resultado</option>
+                                <option value="CLAV">CLAV</option>
+                                <option value="NPP">NPP</option>
+                                <option value="Autorização">Autorização</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label for="filterSearch" class="block text-xs font-medium text-gray-700 mb-1">Buscar ID SAC</label>
+                            <input type="text" id="filterSearch" placeholder="ID do SAC..." oninput="applyFilters()" class="w-full border border-white/30 rounded-lg px-3 py-2 bg-white/80 backdrop-blur-sm focus:ring-2 focus:ring-purple-500 focus:border-transparent shadow-lg transition-all duration-300 text-xs">
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="exportToExcel()" class="btn-success text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium text-xs">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <span>Exportar Excel</span>
+                        </button>
+                        
+                        <button onclick="openNewSacModal()" class="btn-primary text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium text-xs">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                            </svg>
+                            <span>Novo SAC</span>
+                        </button>
+                        
+                        <button onclick="clearFilters()" class="bg-gradient-to-r from-gray-500 to-gray-600 hover:from-gray-600 hover:to-gray-700 text-white px-4 py-2 rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-xs">
+                            Limpar
+                        </button>
+                        
+                        <button onclick="openDeleteAllModal()" class="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 font-medium text-xs shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            <span>Excluir Tudo</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Tabela de Registros -->
+                <div class="glass-effect rounded-xl shadow-2xl overflow-hidden border border-white/20">
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>ID SAC</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>CLIENTE</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>TIPO</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>ABERTURA</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>PRAZO</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                                        <div class="flex items-center space-x-1">
+                                            <span>STATUS</span>
+                                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"></path>
+                                            </svg>
+                                        </div>
+                                    </th>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        AÇÕES
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200" id="sacTableBody">
+                                <tr>
+                                    <td colspan="7" class="px-3 py-8 text-center text-gray-500">
+                                        <div class="flex flex-col items-center space-y-2">
+                                            <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                            </svg>
+                                            <p class="text-sm font-medium">Nenhum SAC encontrado</p>
+                                            <p class="text-xs">Clique em "Novo SAC" para criar o primeiro registro</p>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Modal Novo SAC -->
+                <div id="newSacModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Novo SAC</h3>
+                            <button onclick="closeNewSacModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form onsubmit="createNewSac(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ID SAC</label>
+                                    <input type="text" required placeholder="Ex: #2801, SAC-001, etc." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                                    <input type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                    <div class="space-y-2">
+                                        <select id="newSacTipoSelect" onchange="handleTipoChange('new')" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            <option value="">Selecione...</option>
+                                            <option>Agendamento</option>
+                                            <option>Resultado</option>
+                                            <option>CLAV</option>
+                                            <option>NPP</option>
+                                            <option>Autorização</option>
+                                            <option value="__novo__">+ Criar Novo Tipo</option>
+                                        </select>
+                                        <input type="text" id="newSacTipoCustom" placeholder="Digite o novo tipo..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent hidden">
+                                        <div id="newSacTipoButtons" class="flex space-x-2 hidden">
+                                            <button type="button" onclick="confirmNewTipo('new')" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                                                ✓ Confirmar
+                                            </button>
+                                            <button type="button" onclick="cancelNewTipo('new')" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">
+                                                ✗ Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                                    <input type="date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button type="button" onclick="closeNewSacModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                    Criar SAC
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Excluir Tudo -->
+                <div id="deleteAllModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4 border-2 border-red-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                                    <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                                    </svg>
+                                </div>
+                                <h3 class="text-lg font-bold text-red-800">⚠️ ATENÇÃO - EXCLUSÃO TOTAL</h3>
+                            </div>
+                            <button onclick="closeDeleteAllModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                                <p class="text-sm text-red-800 font-medium mb-2">🚨 Esta ação é IRREVERSÍVEL!</p>
+                                <p class="text-sm text-red-700">Todos os SACs serão permanentemente excluídos do sistema. Esta operação não pode ser desfeita.</p>
+                            </div>
+                            
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-3 mb-4">
+                                <p class="text-xs text-gray-600 mb-1">📊 Dados que serão excluídos:</p>
+                                <ul class="text-xs text-gray-700 space-y-1">
+                                    <li>• <span id="deleteAllCount">0</span> SACs cadastrados</li>
+                                    <li>• Histórico de performance</li>
+                                    <li>• Estatísticas mensais</li>
+                                    <li>• Todos os dados do dashboard</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <form onsubmit="confirmDeleteAll(event)">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-bold text-red-700 mb-2">
+                                        🔐 Digite a senha de segurança para confirmar:
+                                    </label>
+                                    <input 
+                                        type="password" 
+                                        id="deleteAllPassword" 
+                                        required 
+                                        placeholder="Digite a senha..." 
+                                        class="w-full border-2 border-red-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-red-500 focus:border-red-500 bg-red-50"
+                                        autocomplete="off"
+                                    >
+                                    <p class="text-xs text-gray-500 mt-1">💡 Dica: SETOR</p>
+                                </div>
+                                
+                                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                                    <div class="flex items-center space-x-2">
+                                        <input type="checkbox" id="confirmDeleteCheckbox" required class="rounded border-yellow-300 text-red-600 focus:ring-red-500">
+                                        <label for="confirmDeleteCheckbox" class="text-sm text-yellow-800 font-medium">
+                                            Confirmo que entendo que esta ação é irreversível
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button type="button" onclick="closeDeleteAllModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors font-medium">
+                                    ✖️ Cancelar
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors font-bold flex items-center space-x-2">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                    <span>🗑️ EXCLUIR TUDO</span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Modal Editar SAC -->
+                <div id="editSacModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden items-center justify-center z-50">
+                    <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md mx-4">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-lg font-semibold text-gray-800">Editar SAC</h3>
+                            <button onclick="closeEditSacModal()" class="text-gray-400 hover:text-gray-600">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                </svg>
+                            </button>
+                        </div>
+                        <form onsubmit="updateSac(event)">
+                            <input type="hidden" id="editSacId">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">ID SAC</label>
+                                    <input type="text" id="editSacIdField" required placeholder="Ex: #2801, SAC-001, etc." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Cliente</label>
+                                    <input type="text" id="editSacCliente" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo</label>
+                                    <div class="space-y-2">
+                                        <select id="editSacTipo" onchange="handleTipoChange('edit')" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                            <option value="">Selecione...</option>
+                                            <option>Agendamento</option>
+                                            <option>Resultado</option>
+                                            <option>CLAV</option>
+                                            <option>NPP</option>
+                                            <option>Autorização</option>
+                                            <option value="__novo__">+ Criar Novo Tipo</option>
+                                        </select>
+                                        <input type="text" id="editSacTipoCustom" placeholder="Digite o novo tipo..." class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent hidden">
+                                        <div id="editSacTipoButtons" class="flex space-x-2 hidden">
+                                            <button type="button" onclick="confirmNewTipo('edit')" class="px-3 py-1 bg-green-600 text-white rounded text-sm hover:bg-green-700 transition-colors">
+                                                ✓ Confirmar
+                                            </button>
+                                            <button type="button" onclick="cancelNewTipo('edit')" class="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600 transition-colors">
+                                                ✗ Cancelar
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Prazo</label>
+                                    <input type="date" id="editSacPrazo" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                                </div>
+                            </div>
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button type="button" onclick="closeEditSacModal()" class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                                    Cancelar
+                                </button>
+                                <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                                    Salvar Alterações
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Evolução Mensal Chart
+        const ctx = document.getElementById('evolucaoChart').getContext('2d');
+        const evolucaoChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
+                datasets: [{
+                    label: 'SACs',
+                    data: [0, 0, 0, 0, 0, 0, 0, 0],
+                    borderColor: '#004B8D',
+                    backgroundColor: 'rgba(0, 75, 141, 0.1)',
+                    tension: 0.4,
+                    fill: true,
+                    pointBackgroundColor: '#0093D0',
+                    pointBorderColor: '#004B8D',
+                    pointRadius: 4,
+                    pointHoverRadius: 6,
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 20
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all content
+            const contents = ['visao-geral-content', 'performance-content', 'gestao-content'];
+            contents.forEach(content => {
+                document.getElementById(content).classList.add('hidden');
+            });
+
+            // Show selected content
+            document.getElementById(tabName + '-content').classList.remove('hidden');
+
+            // Update tab styles
+            const tabs = ['visao-geral', 'performance', 'gestao'];
+            tabs.forEach(tab => {
+                const tabElement = document.getElementById('tab-' + tab);
+                if (tab === tabName) {
+                    tabElement.className = 'tab-active px-3 py-2 rounded-md font-medium transition-colors text-sm';
+                } else {
+                    tabElement.className = 'tab-inactive px-3 py-2 rounded-md font-medium transition-colors text-sm';
+                }
+            });
+        }
+
+        // Update dashboard function
+        function updateDashboard() {
+            // Calculate metrics from sacData
+            const totalSacs = sacData.length;
+            const totalFinalizados = sacData.filter(sac => sac.finalizado).length;
+            const finalizadosNoPrazo = sacData.filter(sac => sac.finalizado && sac.dentroDoPrazo === true).length;
+            const finalizadosAtrasados = sacData.filter(sac => sac.finalizado && sac.dentroDoPrazo === false).length;
+            
+            const hoje = new Date();
+            hoje.setHours(23, 59, 59, 999); // Set to end of today for accurate comparison
+            
+            // Atrasados: SACs não finalizados com prazo vencido (data do prazo < hoje)
+            const atrasados = sacData.filter(sac => {
+                if (sac.finalizado) return false; // Se já foi finalizado, não está atrasado
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(0, 0, 0, 0); // Início do dia do prazo
+                const hojeCopy = new Date(hoje);
+                hojeCopy.setHours(0, 0, 0, 0); // Início do dia atual
+                return prazoCopy < hojeCopy; // Prazo já venceu
+            }).length;
+            
+            // Em Tratativa: SACs não finalizados que ainda estão dentro do prazo
+            const emTratativa = sacData.filter(sac => {
+                if (sac.finalizado) return false; // Se já foi finalizado, não está em tratativa
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(0, 0, 0, 0); // Início do dia do prazo
+                const hojeCopy = new Date(hoje);
+                hojeCopy.setHours(0, 0, 0, 0); // Início do dia atual
+                return prazoCopy >= hojeCopy; // Prazo ainda não venceu
+            }).length;
+
+            // Update KPI cards
+            document.getElementById('totalSacs').textContent = totalSacs;
+            document.getElementById('totalFinalizados').textContent = totalFinalizados;
+            document.getElementById('finalizadosNoPrazo').textContent = finalizadosNoPrazo;
+            document.getElementById('finalizadosAtrasados').textContent = finalizadosAtrasados;
+            document.getElementById('atrasados').textContent = atrasados;
+            document.getElementById('emTratativa').textContent = emTratativa;
+
+            // Update timestamp
+            const now = new Date();
+            const timestamp = now.toLocaleDateString('pt-BR') + ', ' + now.toLocaleTimeString('pt-BR');
+            document.getElementById('lastUpdate').textContent = timestamp;
+
+            // Update evolution chart with monthly data
+            const monthlyData = Object.values(monthlyStats);
+            evolucaoChart.data.datasets[0].data = monthlyData;
+            evolucaoChart.update();
+
+            // Calculate performance metrics
+            const taxaResolucao = totalSacs > 0 ? Math.round((totalFinalizados / totalSacs) * 100) : 0;
+            const tempoMedio = calculateAverageTime();
+            const slaCompliance = calculateSLACompliance();
+
+            // Update progress bars
+            updateProgressBar('Taxa Resolução', taxaResolucao, 90);
+            updateProgressBar('Tempo Médio', tempoMedio, 2);
+            updateProgressBar('SLA', slaCompliance, 95);
+
+            // Update performance metrics in Performance tab
+            updatePerformanceMetrics(taxaResolucao, tempoMedio, slaCompliance);
+
+            // Update performance charts
+            updatePerformanceCharts();
+
+            // Update type statistics
+            updateTypeStatistics();
+
+            // Update main motives
+            updateMainMotives();
+
+            // Update ranking
+            updateRanking();
+        }
+
+        function calculateAverageTime() {
+            const finalizadosSacs = sacData.filter(sac => sac.finalizado);
+            if (finalizadosSacs.length === 0) return 0;
+            
+            const totalDays = finalizadosSacs.reduce((sum, sac) => {
+                // Usar diasResolucao se disponível, senão calcular
+                if (sac.diasResolucao !== undefined) {
+                    return sum + sac.diasResolucao;
+                }
+                
+                // Fallback para SACs antigos
+                const dataFim = sac.dataFinalizacao ? new Date(sac.dataFinalizacao) : new Date();
+                const diffTime = Math.abs(dataFim - sac.abertura);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return sum + diffDays;
+            }, 0);
+            
+            return Math.round((totalDays / finalizadosSacs.length) * 10) / 10;
+        }
+
+        function calculateSLACompliance() {
+            if (sacData.length === 0) return 0;
+            const hoje = new Date();
+            hoje.setHours(23, 59, 59, 999);
+            
+            const onTime = sacData.filter(sac => {
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(23, 59, 59, 999); // Fim do dia do prazo cadastrado
+                
+                // Se foi finalizado, usar a propriedade dentroDoPrazo se disponível
+                if (sac.finalizado) {
+                    if (sac.dentroDoPrazo !== undefined) {
+                        return sac.dentroDoPrazo;
+                    }
+                    // Fallback para SACs antigos sem a propriedade dentroDoPrazo
+                    if (sac.dataFinalizacao) {
+                        const dataFinalizacao = new Date(sac.dataFinalizacao);
+                        dataFinalizacao.setHours(23, 59, 59, 999);
+                        return dataFinalizacao <= prazoCopy; // Comparar com a data do prazo cadastrada
+                    }
+                    return true; // Assumir que foi no prazo se não há data de finalização
+                }
+                // Se não foi finalizado, verificar se ainda está dentro do prazo cadastrado
+                return prazoCopy >= hoje;
+            }).length;
+            return Math.round((onTime / sacData.length) * 100);
+        }
+
+        function updateProgressBar(label, value, target) {
+            const progressBars = document.querySelectorAll('.progress-bar');
+            const labels = ['Taxa Resolução', 'Tempo Médio', 'SLA'];
+            const index = labels.indexOf(label);
+            
+            if (index !== -1 && progressBars[index]) {
+                let percentage;
+                if (label === 'Tempo Médio') {
+                    percentage = Math.min((2 / Math.max(value, 0.1)) * 100, 100);
+                    document.querySelector('.progress-bar').parentElement.parentElement.querySelector('.text-xs.font-bold').textContent = value + 'd';
+                } else {
+                    percentage = Math.min(value, 100);
+                    if (label === 'Taxa Resolução') {
+                        document.querySelector('.progress-bar').parentElement.parentElement.querySelector('.text-xs.font-bold').textContent = value + '%';
+                    } else if (label === 'SLA') {
+                        progressBars[2].parentElement.parentElement.querySelector('.text-xs.font-bold').textContent = value + '%';
+                    }
+                }
+                progressBars[index].style.width = percentage + '%';
+            }
+        }
+
+        function updatePerformanceCharts() {
+            // Update performance chart with calculated data
+            const monthlyPerformance = calculateMonthlyPerformance();
+            performanceChart.data.datasets[0].data = monthlyPerformance;
+            performanceChart.update();
+
+            // Update tempo chart with type averages - dynamic types
+            const typesWithData = getAllTypes().filter(type => {
+                return sacData.some(sac => sac.tipo === type && sac.finalizado);
+            }).slice(0, 8);
+            
+            const typeAverages = calculateTypeAverages();
+            
+            // Update chart labels and data dynamically
+            tempoChart.data.labels = typesWithData;
+            tempoChart.data.datasets[0].data = typeAverages;
+            
+            // Update colors for new types
+            const extendedColors = [
+                '#00B3A6', '#004B8D', '#0093D0', '#F9B233', '#6E6E6E',
+                '#8B5CF6', '#EF4444', '#10B981', '#F59E0B', '#6366F1',
+                '#EC4899', '#14B8A6', '#F97316', '#84CC16', '#06B6D4'
+            ];
+            tempoChart.data.datasets[0].backgroundColor = typesWithData.map((_, index) => 
+                extendedColors[index] || '#6E6E6E'
+            );
+            
+            tempoChart.update();
+        }
+
+        function calculateMonthlyPerformance() {
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
+            return months.map(month => {
+                const monthSacs = sacData.filter(sac => {
+                    const sacMonth = sac.abertura.toLocaleDateString('pt-BR', { month: 'short' });
+                    const monthKey = sacMonth.charAt(0).toUpperCase() + sacMonth.slice(1);
+                    return monthKey === month;
+                });
+                
+                if (monthSacs.length === 0) return 0;
+                const finalized = monthSacs.filter(sac => sac.finalizado).length;
+                return Math.round((finalized / monthSacs.length) * 100);
+            });
+        }
+
+        function calculateTypeAverages() {
+            const types = getAllTypes().filter(type => {
+                return sacData.some(sac => sac.tipo === type && sac.finalizado);
+            }).slice(0, 8); // Show up to 8 types that have finalized SACs
+            
+            return types.map(type => {
+                const typeSacs = sacData.filter(sac => sac.tipo === type && sac.finalizado);
+                if (typeSacs.length === 0) return 0;
+                
+                const totalDays = typeSacs.reduce((sum, sac) => {
+                    if (sac.diasResolucao !== undefined) {
+                        return sum + sac.diasResolucao;
+                    }
+                    const diffTime = Math.abs(new Date() - sac.abertura);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return sum + diffDays;
+                }, 0);
+                
+                return Math.round((totalDays / typeSacs.length) * 10) / 10;
+            });
+        }
+
+        function updateTypeStatistics() {
+            // Update performance by type section
+            const types = ['NPP', 'Resultado', 'Agendamento', 'CLAV', 'Autorização'];
+            const typeElements = document.querySelectorAll('#performance-content .space-y-2 > div');
+            
+            types.forEach((type, index) => {
+                if (typeElements[index]) {
+                    const typeSacs = sacData.filter(sac => sac.tipo === type);
+                    const finalized = typeSacs.filter(sac => sac.finalizado).length;
+                    const rate = typeSacs.length > 0 ? Math.round((finalized / typeSacs.length) * 100) : 0;
+                    const avgTime = calculateTypeAverages()[index];
+                    
+                    const rateElement = typeElements[index].querySelector('.text-right .text-sm.font-bold');
+                    const timeElement = typeElements[index].querySelector('.text-xs.text-gray-500');
+                    
+                    if (rateElement) rateElement.textContent = rate + '%';
+                    if (timeElement) timeElement.textContent = avgTime + ' dias médio';
+                }
+            });
+        }
+
+        function updateMainMotives() {
+            const motivesContainer = document.querySelector('#visao-geral-content .space-y-2');
+            
+            // Get type counts and sort by frequency
+            const typeCounts = getAllTypes().map(type => ({
+                type,
+                count: sacData.filter(sac => sac.tipo === type).length
+            })).filter(item => item.count > 0).sort((a, b) => b.count - a.count).slice(0, 8); // Show top 8 types
+            
+            if (typeCounts.length === 0) {
+                motivesContainer.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <p class="text-sm font-medium">Nenhum dado disponível</p>
+                        <p class="text-xs">Crie alguns SACs para ver os principais motivos</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate colors for each type
+            const colors = [
+                { bg: 'bg-purple-100', text: 'text-purple-600' },
+                { bg: 'bg-blue-100', text: 'text-blue-600' },
+                { bg: 'bg-green-100', text: 'text-green-600' },
+                { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+                { bg: 'bg-red-100', text: 'text-red-600' },
+                { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+                { bg: 'bg-pink-100', text: 'text-pink-600' },
+                { bg: 'bg-teal-100', text: 'text-teal-600' }
+            ];
+            
+            motivesContainer.innerHTML = typeCounts.map((typeData, index) => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-4 h-4 ${colors[index].bg} ${colors[index].text} rounded-full flex items-center justify-center text-xs font-bold">${index + 1}</span>
+                        <span class="text-xs font-medium text-gray-700">${typeData.type}</span>
+                    </div>
+                    <span class="text-xs font-bold text-gray-800">${typeData.count}</span>
+                </div>
+            `).join('');
+        }
+
+        function updatePerformanceMetrics(taxaResolucao, tempoMedio, slaCompliance) {
+            // Update meta values
+            document.getElementById('metaResolucaoValue').textContent = taxaResolucao + '%';
+            document.getElementById('metaTempoValue').textContent = tempoMedio;
+            document.getElementById('metaSlaValue').textContent = slaCompliance + '%';
+            document.getElementById('metaSatisfacaoValue').textContent = '0'; // Placeholder for satisfaction
+
+            // Update progress bars
+            document.getElementById('metaResolucaoBar').style.width = Math.min(taxaResolucao, 100) + '%';
+            document.getElementById('metaTempoBar').style.width = Math.min((2 / Math.max(tempoMedio, 0.1)) * 100, 100) + '%';
+            document.getElementById('metaSlaBar').style.width = Math.min(slaCompliance, 100) + '%';
+            document.getElementById('metaSatisfacaoBar').style.width = '0%';
+
+            // Update bar colors based on performance
+            const resolucaoBar = document.getElementById('metaResolucaoBar');
+            if (taxaResolucao >= 90) {
+                resolucaoBar.className = 'bg-gradient-to-r from-teal-400 to-teal-500 h-2 rounded-full transition-all duration-1000';
+                resolucaoBar.style.background = 'linear-gradient(90deg, #00B3A6 0%, #0093D0 100%)';
+            } else if (taxaResolucao >= 75) {
+                resolucaoBar.className = 'bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000';
+                resolucaoBar.style.background = 'linear-gradient(90deg, #F9B233 0%, #e09900 100%)';
+            } else {
+                resolucaoBar.className = 'bg-gradient-to-r from-red-400 to-red-500 h-2 rounded-full transition-all duration-1000';
+            }
+
+            const tempoBar = document.getElementById('metaTempoBar');
+            if (tempoMedio <= 2) {
+                tempoBar.className = 'bg-gradient-to-r from-teal-400 to-teal-500 h-2 rounded-full transition-all duration-1000';
+                tempoBar.style.background = 'linear-gradient(90deg, #00B3A6 0%, #0093D0 100%)';
+            } else if (tempoMedio <= 3) {
+                tempoBar.className = 'bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000';
+                tempoBar.style.background = 'linear-gradient(90deg, #F9B233 0%, #e09900 100%)';
+            } else {
+                tempoBar.className = 'bg-gradient-to-r from-red-400 to-red-500 h-2 rounded-full transition-all duration-1000';
+            }
+
+            const slaBar = document.getElementById('metaSlaBar');
+            if (slaCompliance >= 95) {
+                slaBar.className = 'bg-gradient-to-r from-teal-400 to-teal-500 h-2 rounded-full transition-all duration-1000';
+                slaBar.style.background = 'linear-gradient(90deg, #00B3A6 0%, #0093D0 100%)';
+            } else if (slaCompliance >= 85) {
+                slaBar.className = 'bg-gradient-to-r from-yellow-400 to-yellow-500 h-2 rounded-full transition-all duration-1000';
+                slaBar.style.background = 'linear-gradient(90deg, #F9B233 0%, #e09900 100%)';
+            } else {
+                slaBar.className = 'bg-gradient-to-r from-red-400 to-red-500 h-2 rounded-full transition-all duration-1000';
+            }
+
+            // Update performance alerts
+            updatePerformanceAlerts(taxaResolucao, tempoMedio, slaCompliance);
+        }
+
+        function updatePerformanceAlerts(taxaResolucao, tempoMedio, slaCompliance) {
+            const alertsContainer = document.getElementById('alertasContainer');
+            const alerts = [];
+
+            // Verificar alertas críticos
+            if (slaCompliance < 95) {
+                alerts.push({
+                    type: 'critical',
+                    title: 'Meta SLA não atingida',
+                    message: `Cumprimento SLA está em ${slaCompliance}%, abaixo da meta de 95%`,
+                    action: 'Ver Detalhes'
+                });
+            }
+
+            if (tempoMedio > 3) {
+                alerts.push({
+                    type: 'critical',
+                    title: 'Tempo médio crítico',
+                    message: `Tempo médio de resolução está em ${tempoMedio} dias, muito acima da meta de 2 dias`,
+                    action: 'Analisar Urgente'
+                });
+            }
+
+            // Verificar alertas de atenção
+            if (tempoMedio > 2 && tempoMedio <= 3) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'Tempo médio elevado',
+                    message: `Tempo médio de resolução subiu para ${tempoMedio} dias`,
+                    action: 'Analisar'
+                });
+            }
+
+            if (taxaResolucao < 90 && taxaResolucao >= 75) {
+                alerts.push({
+                    type: 'warning',
+                    title: 'Taxa de resolução baixa',
+                    message: `Taxa de resolução está em ${taxaResolucao}%, abaixo da meta de 90%`,
+                    action: 'Revisar Processos'
+                });
+            }
+
+            if (taxaResolucao < 75) {
+                alerts.push({
+                    type: 'critical',
+                    title: 'Taxa de resolução crítica',
+                    message: `Taxa de resolução está em ${taxaResolucao}%, muito abaixo da meta`,
+                    action: 'Ação Imediata'
+                });
+            }
+
+            // Verificar melhorias e sucessos
+            const atrasados = sacData.filter(sac => {
+                if (sac.finalizado) return false;
+                const hoje = new Date();
+                hoje.setHours(23, 59, 59, 999);
+                const prazo = new Date(sac.prazo);
+                prazo.setHours(23, 59, 59, 999);
+                return prazo < hoje;
+            }).length;
+
+            if (atrasados === 0 && sacData.length > 0) {
+                alerts.push({
+                    type: 'success',
+                    title: 'Nenhum SAC atrasado',
+                    message: 'Excelente! Todos os SACs estão dentro do prazo ou finalizados',
+                    action: 'Manter Ritmo'
+                });
+            }
+
+            if (slaCompliance >= 95) {
+                alerts.push({
+                    type: 'success',
+                    title: 'Meta SLA atingida',
+                    message: `Cumprimento SLA está em ${slaCompliance}%, acima da meta de 95%`,
+                    action: 'Compartilhar'
+                });
+            }
+
+            if (tempoMedio <= 2) {
+                alerts.push({
+                    type: 'success',
+                    title: 'Tempo médio excelente',
+                    message: `Tempo médio de ${tempoMedio} dias está dentro da meta`,
+                    action: 'Manter Padrão'
+                });
+            }
+
+            // Alertas informativos sobre volume
+            const thisMonth = new Date().getMonth();
+            const thisMonthSacs = sacData.filter(sac => sac.abertura.getMonth() === thisMonth).length;
+            const lastMonth = thisMonth === 0 ? 11 : thisMonth - 1;
+            const lastMonthSacs = sacData.filter(sac => sac.abertura.getMonth() === lastMonth).length;
+
+            if (lastMonthSacs > 0) {
+                const volumeChange = Math.round(((thisMonthSacs - lastMonthSacs) / lastMonthSacs) * 100);
+                if (volumeChange < -10) {
+                    alerts.push({
+                        type: 'info',
+                        title: 'Volume de SACs reduziu',
+                        message: `Volume de SACs reduziu ${Math.abs(volumeChange)}% este mês`,
+                        action: 'Relatório'
+                    });
+                } else if (volumeChange > 20) {
+                    alerts.push({
+                        type: 'warning',
+                        title: 'Aumento significativo no volume',
+                        message: `Volume de SACs aumentou ${volumeChange}% este mês`,
+                        action: 'Investigar Causa'
+                    });
+                }
+            }
+
+            // Renderizar alertas
+            if (alerts.length === 0) {
+                alertsContainer.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Nenhum alerta no momento</p>
+                        <p class="text-xs">Todas as métricas estão dentro dos parâmetros</p>
+                    </div>
+                `;
+                return;
+            }
+
+            alertsContainer.innerHTML = alerts.map(alert => {
+                const styles = getAlertStyles(alert.type);
+                return `
+                    <div class="p-2 bg-gradient-to-r ${styles.bg} border-l-2 ${styles.border} rounded-lg">
+                        <div class="flex items-center justify-between mb-1">
+                            <h4 class="text-xs font-semibold ${styles.titleColor}">${alert.title}</h4>
+                            <span class="text-xs ${styles.badgeBg} ${styles.badgeColor} px-1 py-0.5 rounded-full">${styles.badge}</span>
+                        </div>
+                        <p class="text-xs ${styles.textColor}">${alert.message}</p>
+                        <button onclick="handleAlertAction('${alert.action}')" class="mt-1 text-xs ${styles.buttonBg} text-white px-2 py-0.5 rounded ${styles.buttonHover} transition-colors">
+                            ${alert.action}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function getAlertStyles(type) {
+            switch (type) {
+                case 'critical':
+                    return {
+                        bg: 'from-red-50 to-red-100',
+                        border: 'border-red-400',
+                        titleColor: 'text-red-800',
+                        textColor: 'text-red-700',
+                        badgeBg: 'bg-red-200',
+                        badgeColor: 'text-red-800',
+                        badge: 'CRÍTICO',
+                        buttonBg: 'bg-red-600',
+                        buttonHover: 'hover:bg-red-700'
+                    };
+                case 'warning':
+                    return {
+                        bg: 'from-yellow-50 to-yellow-100',
+                        border: 'border-yellow-400',
+                        titleColor: 'text-yellow-800',
+                        textColor: 'text-yellow-700',
+                        badgeBg: 'bg-yellow-200',
+                        badgeColor: 'text-yellow-800',
+                        badge: 'ATENÇÃO',
+                        buttonBg: 'bg-yellow-600',
+                        buttonHover: 'hover:bg-yellow-700'
+                    };
+                case 'info':
+                    return {
+                        bg: 'from-blue-50 to-blue-100',
+                        border: 'border-blue-400',
+                        titleColor: 'text-blue-800',
+                        textColor: 'text-blue-700',
+                        badgeBg: 'bg-blue-200',
+                        badgeColor: 'text-blue-800',
+                        badge: 'INFO',
+                        buttonBg: 'bg-blue-600',
+                        buttonHover: 'hover:bg-blue-700'
+                    };
+                case 'success':
+                    return {
+                        bg: 'from-green-50 to-green-100',
+                        border: 'border-green-400',
+                        titleColor: 'text-green-800',
+                        textColor: 'text-green-700',
+                        badgeBg: 'bg-green-200',
+                        badgeColor: 'text-green-800',
+                        badge: 'SUCESSO',
+                        buttonBg: 'bg-green-600',
+                        buttonHover: 'hover:bg-green-700'
+                    };
+                default:
+                    return {
+                        bg: 'from-gray-50 to-gray-100',
+                        border: 'border-gray-400',
+                        titleColor: 'text-gray-800',
+                        textColor: 'text-gray-700',
+                        badgeBg: 'bg-gray-200',
+                        badgeColor: 'text-gray-800',
+                        badge: 'INFO',
+                        buttonBg: 'bg-gray-600',
+                        buttonHover: 'hover:bg-gray-700'
+                    };
+            }
+        }
+
+        function handleAlertAction(action) {
+            switch (action) {
+                case 'Ver Detalhes':
+                case 'Analisar':
+                case 'Analisar Urgente':
+                case 'Revisar Processos':
+                case 'Ação Imediata':
+                    switchTab('gestao');
+                    showExportMessage(`Redirecionado para Gestão para ${action.toLowerCase()}`, 'info');
+                    break;
+                case 'Relatório':
+                    exportToExcel();
+                    break;
+                case 'Compartilhar':
+                case 'Manter Ritmo':
+                case 'Manter Padrão':
+                    showExportMessage(`${action} - Continue o excelente trabalho!`, 'success');
+                    break;
+                case 'Investigar Causa':
+                    switchTab('visao-geral');
+                    showExportMessage('Verifique a aba Visão Geral para analisar tendências', 'info');
+                    break;
+                default:
+                    showExportMessage(`Ação: ${action}`, 'info');
+            }
+        }
+
+        function updateRanking() {
+            const types = getAllTypes();
+            const rankingData = types.map(type => {
+                const typeSacs = sacData.filter(sac => sac.tipo === type);
+                const finalized = typeSacs.filter(sac => sac.finalizado).length;
+                const rate = typeSacs.length > 0 ? Math.round((finalized / typeSacs.length) * 100) : 0;
+                const avgTime = calculateTypeAverageTime(type);
+                
+                return {
+                    type,
+                    rate,
+                    avgTime,
+                    count: typeSacs.length
+                };
+            }).filter(item => item.count > 0).sort((a, b) => b.rate - a.rate);
+
+            const container = document.getElementById('rankingContainer');
+            
+            if (rankingData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Nenhum dado disponível</p>
+                        <p class="text-xs">Crie alguns SACs para ver o ranking</p>
+                    </div>
+                `;
+                return;
+            }
+
+            // Extended color palette for more types
+            const colors = [
+                '#00B3A6', '#004B8D', '#0093D0', '#F9B233', '#6E6E6E',
+                '#8B5CF6', '#EF4444', '#10B981', '#F59E0B', '#6366F1',
+                '#EC4899', '#14B8A6', '#F97316', '#84CC16', '#06B6D4'
+            ];
+            const bgColors = [
+                'from-teal-50 to-teal-100', 'from-blue-50 to-blue-100', 'from-sky-50 to-sky-100', 
+                'from-yellow-50 to-yellow-100', 'from-gray-50 to-gray-100', 'from-purple-50 to-purple-100',
+                'from-red-50 to-red-100', 'from-green-50 to-green-100', 'from-amber-50 to-amber-100',
+                'from-indigo-50 to-indigo-100', 'from-pink-50 to-pink-100', 'from-cyan-50 to-cyan-100',
+                'from-orange-50 to-orange-100', 'from-lime-50 to-lime-100', 'from-sky-50 to-sky-100'
+            ];
+            
+            container.innerHTML = rankingData.map((item, index) => `
+                <div class="flex items-center justify-between p-2 bg-gradient-to-r ${bgColors[index] || 'from-gray-50 to-gray-100'} rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-5 h-5 text-white rounded-full flex items-center justify-center text-xs font-bold" style="background-color: ${colors[index] || '#6E6E6E'};">${index + 1}</span>
+                        <div>
+                            <p class="text-xs font-medium text-gray-800">${item.type}</p>
+                            <p class="text-xs text-gray-500">${item.avgTime} dias médio</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold" style="color: ${colors[index] || '#6E6E6E'};">${item.rate}%</p>
+                        <p class="text-xs text-gray-500">Taxa resolução</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function calculateTypeAverageTime(type) {
+            const typeSacs = sacData.filter(sac => sac.tipo === type && sac.finalizado);
+            if (typeSacs.length === 0) return 0;
+            
+            const totalDays = typeSacs.reduce((sum, sac) => {
+                const diffTime = Math.abs(new Date() - sac.abertura);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return sum + diffDays;
+            }, 0);
+            
+            return Math.round((totalDays / typeSacs.length) * 10) / 10;
+        }
+
+        // Gestão functions
+        function openNewSacModal() {
+            document.getElementById('newSacModal').classList.remove('hidden');
+            document.getElementById('newSacModal').classList.add('flex');
+        }
+
+        function closeNewSacModal() {
+            document.getElementById('newSacModal').classList.add('hidden');
+            document.getElementById('newSacModal').classList.remove('flex');
+        }
+
+        function editSac(id) {
+            const sac = sacData.find(s => s.id === id);
+            if (sac) {
+                // Populate edit form with current data
+                document.getElementById('editSacId').value = sac.id;
+                document.getElementById('editSacIdField').value = sac.id;
+                document.getElementById('editSacCliente').value = sac.cliente;
+                document.getElementById('editSacTipo').value = sac.tipo;
+                document.getElementById('editSacPrazo').value = sac.prazo.toISOString().split('T')[0];
+                
+                // Show modal
+                document.getElementById('editSacModal').classList.remove('hidden');
+                document.getElementById('editSacModal').classList.add('flex');
+            }
+        }
+
+        function closeEditSacModal() {
+            document.getElementById('editSacModal').classList.add('hidden');
+            document.getElementById('editSacModal').classList.remove('flex');
+        }
+
+        function updateSac(event) {
+            event.preventDefault();
+            
+            const originalId = document.getElementById('editSacId').value;
+            const newId = document.getElementById('editSacIdField').value;
+            const cliente = document.getElementById('editSacCliente').value;
+            const tipo = document.getElementById('editSacTipo').value;
+            const prazo = document.getElementById('editSacPrazo').value;
+            
+            // Check if new ID already exists (and it's different from original)
+            if (newId !== originalId && sacData.some(sac => sac.id === newId)) {
+                showExportMessage('Este ID SAC já existe! Por favor, escolha outro ID.', 'error');
+                return;
+            }
+            
+            // Find and update the SAC
+            const sacIndex = sacData.findIndex(s => s.id === originalId);
+            if (sacIndex !== -1) {
+                const newPrazoDate = new Date(prazo);
+                newPrazoDate.setHours(23, 59, 59, 999); // Fim do dia do prazo
+                
+                // Update SAC data
+                sacData[sacIndex].id = newId;
+                sacData[sacIndex].cliente = cliente;
+                sacData[sacIndex].tipo = tipo;
+                sacData[sacIndex].prazo = newPrazoDate;
+                
+                // If SAC is finalized and prazo changed, recalculate status
+                if (sacData[sacIndex].finalizado && sacData[sacIndex].dataFinalizacao) {
+                    const dataFinalizacao = new Date(sacData[sacIndex].dataFinalizacao);
+                    dataFinalizacao.setHours(23, 59, 59, 999); // Fim do dia da finalização
+                    
+                    const dentroDoPrazo = dataFinalizacao <= newPrazoDate;
+                    sacData[sacIndex].dentroDoPrazo = dentroDoPrazo;
+                    sacData[sacIndex].status = dentroDoPrazo ? 'Finalizado no Prazo' : 'Finalizado Atrasado';
+                } else if (!sacData[sacIndex].finalizado) {
+                    // Se não está finalizado, recalcular status baseado no novo prazo
+                    const hoje = new Date();
+                    hoje.setHours(23, 59, 59, 999);
+                    
+                    sacData[sacIndex].status = newPrazoDate < hoje ? 'Atrasado' : 'Em Tratativa';
+                }
+                
+                // Update table and dashboard
+                applyFilters();
+                updateDashboard();
+                
+                closeEditSacModal();
+                showExportMessage('SAC atualizado com sucesso!', 'success');
+            }
+        }
+
+        function createNewSac(event) {
+            event.preventDefault();
+            
+            const newId = event.target.elements[0].value;
+            const cliente = event.target.elements[1].value;
+            const tipo = event.target.elements[2].value;
+            const prazo = event.target.elements[3].value;
+            const abertura = new Date();
+            
+            // Verificar se o ID já existe
+            if (sacData.some(sac => sac.id === newId)) {
+                showExportMessage('Este ID SAC já existe! Por favor, escolha outro ID.', 'error');
+                return;
+            }
+            
+            const prazoDate = new Date(prazo);
+            prazoDate.setHours(23, 59, 59, 999); // Fim do dia do prazo
+            
+            // Determinar status inicial baseado no prazo
+            const hoje = new Date();
+            hoje.setHours(23, 59, 59, 999);
+            const statusInicial = prazoDate < hoje ? 'Atrasado' : 'Em Tratativa';
+            
+            // Create SAC object
+            const newSac = {
+                id: newId,
+                cliente: cliente,
+                tipo: tipo,
+                abertura: abertura,
+                prazo: prazoDate,
+                status: statusInicial,
+                parecer: 'Pendente',
+                finalizado: false
+            };
+            
+            // Add to global data
+            sacData.push(newSac);
+            
+            // Update monthly stats
+            const month = abertura.toLocaleDateString('pt-BR', { month: 'short' });
+            const monthKey = month.charAt(0).toUpperCase() + month.slice(1);
+            if (monthlyStats[monthKey] !== undefined) {
+                monthlyStats[monthKey]++;
+            }
+            
+            // Update table using the new function
+            applyFilters();
+            updateDashboard();
+            
+            // Update counter
+            document.getElementById('totalSacsCount').textContent = sacData.length;
+            
+            closeNewSacModal();
+            event.target.reset();
+            
+            showExportMessage(`SAC ${newId} criado com sucesso!`, 'success');
+        }
+
+        function viewSac(id) {
+            const sac = sacData.find(s => s.id === id);
+            if (sac) {
+                alert(`SAC: ${sac.id}\nCliente: ${sac.cliente}\nTipo: ${sac.tipo}\nStatus: ${sac.status}`);
+            }
+        }
+
+        function finalizeSac(id) {
+            const sacIndex = sacData.findIndex(s => s.id === id);
+            if (sacIndex !== -1) {
+                const dataFinalizacao = new Date();
+                
+                const prazoSac = new Date(sacData[sacIndex].prazo);
+                prazoSac.setHours(23, 59, 59, 999); // Fim do dia do prazo
+                
+                // Verificar se foi finalizado dentro do prazo
+                const dentroDoPrazo = dataFinalizacao <= prazoSac;
+                
+                sacData[sacIndex].status = dentroDoPrazo ? 'Finalizado no Prazo' : 'Finalizado Atrasado';
+                sacData[sacIndex].finalizado = true;
+                sacData[sacIndex].dataFinalizacao = dataFinalizacao; // Data completa para cálculos
+                sacData[sacIndex].dentroDoPrazo = dentroDoPrazo;
+                
+                // Calcular dias de resolução (da abertura até a finalização)
+                const diffTime = Math.abs(dataFinalizacao - sacData[sacIndex].abertura);
+                const diasResolucao = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                sacData[sacIndex].diasResolucao = diasResolucao;
+                
+                // Update table and dashboard
+                applyFilters();
+                updateDashboard();
+                
+                const statusMsg = dentroDoPrazo ? 'no prazo' : 'com atraso';
+                showExportMessage(`SAC ${id} finalizado ${statusMsg}!`, dentroDoPrazo ? 'success' : 'warning');
+            }
+        }
+
+        function revertSac(id) {
+            const sacIndex = sacData.findIndex(s => s.id === id);
+            if (sacIndex !== -1) {
+                // Reverter finalização
+                sacData[sacIndex].finalizado = false;
+                sacData[sacIndex].dataFinalizacao = null;
+                sacData[sacIndex].dentroDoPrazo = null;
+                sacData[sacIndex].diasResolucao = null;
+                
+                // Recalcular status baseado no prazo atual
+                const hoje = new Date();
+                hoje.setHours(0, 0, 0, 0);
+                const prazo = new Date(sacData[sacIndex].prazo);
+                prazo.setHours(0, 0, 0, 0);
+                
+                sacData[sacIndex].status = prazo < hoje ? 'Atrasado' : 'Em Tratativa';
+                
+                // Update table and dashboard
+                applyFilters();
+                updateDashboard();
+                
+                showExportMessage(`Finalização do SAC ${id} revertida!`, 'success');
+            }
+        }
+
+        function deleteSac(id) {
+            const sacIndex = sacData.findIndex(s => s.id === id);
+            if (sacIndex !== -1) {
+                // Remove from data
+                const sac = sacData[sacIndex];
+                const month = sac.abertura.toLocaleDateString('pt-BR', { month: 'short' });
+                const monthKey = month.charAt(0).toUpperCase() + month.slice(1);
+                if (monthlyStats[monthKey] !== undefined && monthlyStats[monthKey] > 0) {
+                    monthlyStats[monthKey]--;
+                }
+                
+                sacData.splice(sacIndex, 1);
+                
+                // Update table and dashboard
+                applyFilters();
+                updateDashboard();
+            }
+        }
+
+        function applyFilters() {
+            const monthFilter = document.getElementById('filterMonth').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const typeFilter = document.getElementById('filterType').value;
+            const searchFilter = document.getElementById('filterSearch').value.toLowerCase();
+            
+            // Filter the data
+            let filteredData = sacData.filter(sac => {
+                // Month filter
+                if (monthFilter !== '' && sac.abertura.getMonth() !== parseInt(monthFilter)) {
+                    return false;
+                }
+                
+                // Status filter
+                if (statusFilter !== '') {
+                    const currentStatus = getStatusText(sac);
+                    if (currentStatus !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                // Type filter
+                if (typeFilter !== '' && sac.tipo !== typeFilter) {
+                    return false;
+                }
+                
+                // Search filter (ID)
+                if (searchFilter !== '' && !sac.id.toLowerCase().includes(searchFilter)) {
+                    return false;
+                }
+                
+                return true;
+            });
+            
+            // Update table with filtered data
+            updateTable(filteredData);
+            
+            // Update counter
+            document.getElementById('totalSacsCount').textContent = filteredData.length;
+        }
+
+        function updateTable(data) {
+            const tableBody = document.getElementById('sacTableBody');
+            
+            if (data.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="px-3 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center space-y-2">
+                                <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-sm font-medium">Nenhum SAC encontrado</p>
+                                <p class="text-xs">Ajuste os filtros ou crie novos SACs</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tableBody.innerHTML = data.map(sac => {
+                const statusClass = getStatusClass(sac);
+                const statusText = getStatusText(sac);
+                
+                // Garantir que as datas sejam objetos Date válidos
+                const aberturaDate = sac.abertura instanceof Date ? sac.abertura : new Date(sac.abertura);
+                const prazoDate = sac.prazo instanceof Date ? sac.prazo : new Date(sac.prazo);
+                
+                // Verificar se as datas são válidas
+                const aberturaStr = !isNaN(aberturaDate.getTime()) ? aberturaDate.toLocaleDateString('pt-BR') : 'Data inválida';
+                const prazoStr = !isNaN(prazoDate.getTime()) ? prazoDate.toLocaleDateString('pt-BR') : 'Data inválida';
+                
+                return `
+                    <tr class="table-row hover:bg-gray-50 transition-all duration-300">
+                        <td class="px-3 py-2 whitespace-nowrap text-xs font-medium text-gray-900">${sac.id}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">${sac.cliente}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">${sac.tipo}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">${aberturaStr}</td>
+                        <td class="px-3 py-2 whitespace-nowrap text-xs text-gray-900">${prazoStr}</td>
+                        <td class="px-3 py-2 whitespace-nowrap">
+                            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full ${statusClass}">${statusText}</span>
+                        </td>
+                        <td class="px-3 py-2 whitespace-nowrap text-xs font-medium">
+                            <div class="flex space-x-1">
+                                <button onclick="viewSac('${sac.id}')" class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors" title="Visualizar">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </button>
+                                <button onclick="editSac('${sac.id}')" class="text-purple-600 hover:text-purple-900 p-1 rounded hover:bg-purple-50 transition-colors" title="Editar">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                                    </svg>
+                                </button>
+                                ${!sac.finalizado ? `
+                                <button onclick="finalizeSac('${sac.id}')" class="text-green-600 hover:text-green-900 p-1 rounded hover:bg-green-50 transition-colors" title="Finalizar">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                    </svg>
+                                </button>
+                                ` : `
+                                <button onclick="revertSac('${sac.id}')" class="text-orange-600 hover:text-orange-900 p-1 rounded hover:bg-orange-50 transition-colors" title="Reverter Finalização">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"></path>
+                                    </svg>
+                                </button>
+                                `}
+                                <button onclick="deleteSac('${sac.id}')" class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors" title="Excluir">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function clearFilters() {
+            // Reset all filters
+            document.getElementById('filterMonth').value = '';
+            document.getElementById('filterStatus').value = '';
+            document.getElementById('filterType').value = '';
+            document.getElementById('filterSearch').value = '';
+            
+            // Apply filters to show all data
+            applyFilters();
+        }
+
+        // Helper functions for status
+        function getStatusClass(sac) {
+            if (sac.finalizado) {
+                return sac.dentroDoPrazo ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800';
+            }
+            
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0); // Início do dia atual
+            const prazo = new Date(sac.prazo);
+            prazo.setHours(0, 0, 0, 0); // Início do dia do prazo
+            
+            if (prazo < hoje) {
+                return 'bg-red-100 text-red-800'; // Atrasado
+            }
+            return 'bg-yellow-100 text-yellow-800'; // Em tratativa
+        }
+
+        function getStatusText(sac) {
+            if (sac.finalizado) {
+                return sac.dentroDoPrazo ? 'Finalizado no Prazo' : 'Finalizado Atrasado';
+            }
+            
+            const hoje = new Date();
+            hoje.setHours(0, 0, 0, 0); // Início do dia atual
+            const prazo = new Date(sac.prazo);
+            prazo.setHours(0, 0, 0, 0); // Início do dia do prazo
+            
+            if (prazo < hoje) {
+                return 'Atrasado';
+            }
+            return 'Em Tratativa';
+        }
+
+        // Global data storage
+        let sacData = [];
+        let monthlyStats = {
+            'Jan': 0, 'Fev': 0, 'Mar': 0, 'Abr': 0, 
+            'Mai': 0, 'Jun': 0, 'Jul': 0, 'Ago': 0
+        };
+        
+        // Custom types storage
+        let customTypes = JSON.parse(localStorage.getItem('customSacTypes') || '[]');
+
+        // Performance Charts
+        const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+        const performanceChart = new Chart(performanceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'],
+                datasets: [{
+                    label: 'Taxa Resolução (%)',
+                    data: [0, 0, 0, 0, 0, 0, 0, 0],
+                    backgroundColor: 'rgba(0, 75, 141, 0.8)',
+                    borderColor: '#004B8D',
+                    borderWidth: 2,
+                    borderRadius: 8
+                }, {
+                    label: 'Meta (%)',
+                    data: [90, 90, 90, 90, 90, 90, 90, 90],
+                    type: 'line',
+                    borderColor: '#F9B233',
+                    backgroundColor: 'rgba(249, 178, 51, 0.1)',
+                    borderWidth: 3,
+                    pointBackgroundColor: '#F9B233',
+                    pointBorderColor: '#F9B233',
+                    pointRadius: 5,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        min: 0,
+                        max: 100,
+                        ticks: {
+                            stepSize: 10,
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    },
+                    x: {
+                        grid: {
+                            color: 'rgba(0,0,0,0.1)'
+                        }
+                    }
+                }
+            }
+        });
+
+        const tempoCtx = document.getElementById('tempoChart').getContext('2d');
+        const tempoChart = new Chart(tempoCtx, {
+            type: 'doughnut',
+            data: {
+                labels: getAllTypes().slice(0, 5),
+                datasets: [{
+                    data: [0, 0, 0, 0, 0],
+                    backgroundColor: [
+                        '#00B3A6',
+                        '#004B8D',
+                        '#0093D0',
+                        '#F9B233',
+                        '#6E6E6E'
+                    ],
+                    borderWidth: 3,
+                    borderColor: '#ffffff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            usePointStyle: true
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + ' dias';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Filter functions for Overview and Performance tabs
+        function applyOverviewFilter() {
+            const monthFilter = document.getElementById('overviewMonthFilter').value;
+            updateDashboardWithFilter(monthFilter);
+        }
+
+        function clearOverviewFilter() {
+            document.getElementById('overviewMonthFilter').value = '';
+            updateDashboardWithFilter('');
+        }
+
+        function applyPerformanceFilter() {
+            const monthFilter = document.getElementById('performanceMonthFilter').value;
+            updatePerformanceWithFilter(monthFilter);
+        }
+
+        function clearPerformanceFilter() {
+            document.getElementById('performanceMonthFilter').value = '';
+            updatePerformanceWithFilter('');
+        }
+
+        function updateDashboardWithFilter(monthFilter) {
+            // Filter data based on month
+            let filteredData = sacData;
+            if (monthFilter !== '') {
+                filteredData = sacData.filter(sac => sac.abertura.getMonth() === parseInt(monthFilter));
+            }
+
+            // Calculate metrics from filtered data
+            const totalSacs = filteredData.length;
+            const totalFinalizados = filteredData.filter(sac => sac.finalizado).length;
+            const finalizadosNoPrazo = filteredData.filter(sac => sac.finalizado && sac.dentroDoPrazo === true).length;
+            const finalizadosAtrasados = filteredData.filter(sac => sac.finalizado && sac.dentroDoPrazo === false).length;
+            
+            const hoje = new Date();
+            hoje.setHours(23, 59, 59, 999);
+            
+            const atrasados = filteredData.filter(sac => {
+                if (sac.finalizado) return false;
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(23, 59, 59, 999);
+                return prazoCopy < hoje;
+            }).length;
+            
+            const emTratativa = filteredData.filter(sac => {
+                if (sac.finalizado) return false;
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(23, 59, 59, 999);
+                return prazoCopy >= hoje;
+            }).length;
+
+            // Update KPI cards with filtered data
+            document.getElementById('totalSacs').textContent = totalSacs;
+            document.getElementById('totalFinalizados').textContent = totalFinalizados;
+            document.getElementById('finalizadosNoPrazo').textContent = finalizadosNoPrazo;
+            document.getElementById('finalizadosAtrasados').textContent = finalizadosAtrasados;
+            document.getElementById('atrasados').textContent = atrasados;
+            document.getElementById('emTratativa').textContent = emTratativa;
+
+            // Update evolution chart with filtered data
+            updateEvolutionChartWithFilter(filteredData, monthFilter);
+
+            // Update progress bars with filtered data
+            const taxaResolucao = totalSacs > 0 ? Math.round((totalFinalizados / totalSacs) * 100) : 0;
+            const tempoMedio = calculateAverageTimeFromData(filteredData);
+            const slaCompliance = calculateSLAComplianceFromData(filteredData);
+
+            updateProgressBar('Taxa Resolução', taxaResolucao, 90);
+            updateProgressBar('Tempo Médio', tempoMedio, 2);
+            updateProgressBar('SLA', slaCompliance, 95);
+
+            // Update main motives with filtered data
+            updateMainMotivesWithFilter(filteredData);
+        }
+
+        function updatePerformanceWithFilter(monthFilter) {
+            // Filter data based on month
+            let filteredData = sacData;
+            if (monthFilter !== '') {
+                filteredData = sacData.filter(sac => sac.abertura.getMonth() === parseInt(monthFilter));
+            }
+
+            // Calculate performance metrics from filtered data
+            const totalSacs = filteredData.length;
+            const totalFinalizados = filteredData.filter(sac => sac.finalizado).length;
+            const taxaResolucao = totalSacs > 0 ? Math.round((totalFinalizados / totalSacs) * 100) : 0;
+            const tempoMedio = calculateAverageTimeFromData(filteredData);
+            const slaCompliance = calculateSLAComplianceFromData(filteredData);
+
+            // Update performance metrics
+            updatePerformanceMetrics(taxaResolucao, tempoMedio, slaCompliance);
+
+            // Update performance charts with filtered data
+            updatePerformanceChartsWithFilter(filteredData, monthFilter);
+
+            // Update ranking with filtered data
+            updateRankingWithFilter(filteredData);
+        }
+
+        function updateEvolutionChartWithFilter(filteredData, monthFilter) {
+            if (monthFilter !== '') {
+                // Show daily evolution for selected month
+                const month = parseInt(monthFilter);
+                const year = 2025;
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                
+                const dailyData = [];
+                const dailyLabels = [];
+                
+                for (let day = 1; day <= Math.min(daysInMonth, 31); day += Math.ceil(daysInMonth / 8)) {
+                    const dayData = filteredData.filter(sac => sac.abertura.getDate() <= day).length;
+                    dailyData.push(dayData);
+                    dailyLabels.push(day.toString());
+                }
+                
+                evolucaoChart.data.labels = dailyLabels;
+                evolucaoChart.data.datasets[0].data = dailyData;
+                evolucaoChart.data.datasets[0].label = `SACs - ${getMonthName(month)}`;
+            } else {
+                // Show monthly evolution
+                const monthlyData = Object.values(monthlyStats);
+                evolucaoChart.data.labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
+                evolucaoChart.data.datasets[0].data = monthlyData;
+                evolucaoChart.data.datasets[0].label = 'SACs';
+            }
+            evolucaoChart.update();
+        }
+
+        function updatePerformanceChartsWithFilter(filteredData, monthFilter) {
+            // Update performance chart
+            if (monthFilter !== '') {
+                // Show single month performance
+                const totalSacs = filteredData.length;
+                const finalized = filteredData.filter(sac => sac.finalizado).length;
+                const rate = totalSacs > 0 ? Math.round((finalized / totalSacs) * 100) : 0;
+                
+                performanceChart.data.labels = [getMonthName(parseInt(monthFilter))];
+                performanceChart.data.datasets[0].data = [rate];
+                performanceChart.data.datasets[1].data = [90]; // Meta
+            } else {
+                // Show all months
+                const monthlyPerformance = calculateMonthlyPerformanceFromData(sacData);
+                performanceChart.data.labels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
+                performanceChart.data.datasets[0].data = monthlyPerformance;
+                performanceChart.data.datasets[1].data = [90, 90, 90, 90, 90, 90, 90, 90];
+            }
+            performanceChart.update();
+
+            // Update tempo chart with filtered data - dynamic types
+            const typesWithData = getAllTypes().filter(type => {
+                return filteredData.some(sac => sac.tipo === type && sac.finalizado);
+            }).slice(0, 8);
+            
+            const typeAverages = calculateTypeAveragesFromData(filteredData);
+            
+            // Update chart labels and data dynamically
+            tempoChart.data.labels = typesWithData;
+            tempoChart.data.datasets[0].data = typeAverages;
+            
+            // Update colors for new types
+            const extendedColors = [
+                '#00B3A6', '#004B8D', '#0093D0', '#F9B233', '#6E6E6E',
+                '#8B5CF6', '#EF4444', '#10B981', '#F59E0B', '#6366F1',
+                '#EC4899', '#14B8A6', '#F97316', '#84CC16', '#06B6D4'
+            ];
+            tempoChart.data.datasets[0].backgroundColor = typesWithData.map((_, index) => 
+                extendedColors[index] || '#6E6E6E'
+            );
+            
+            tempoChart.update();
+        }
+
+        function calculateAverageTimeFromData(data) {
+            const finalizadosSacs = data.filter(sac => sac.finalizado);
+            if (finalizadosSacs.length === 0) return 0;
+            
+            const totalDays = finalizadosSacs.reduce((sum, sac) => {
+                if (sac.diasResolucao !== undefined) {
+                    return sum + sac.diasResolucao;
+                }
+                const dataFim = sac.dataFinalizacao ? new Date(sac.dataFinalizacao) : new Date();
+                const diffTime = Math.abs(dataFim - sac.abertura);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return sum + diffDays;
+            }, 0);
+            
+            return Math.round((totalDays / finalizadosSacs.length) * 10) / 10;
+        }
+
+        function calculateSLAComplianceFromData(data) {
+            if (data.length === 0) return 0;
+            const hoje = new Date();
+            hoje.setHours(23, 59, 59, 999);
+            
+            const onTime = data.filter(sac => {
+                const prazoCopy = new Date(sac.prazo);
+                prazoCopy.setHours(23, 59, 59, 999);
+                
+                if (sac.finalizado) {
+                    if (sac.dentroDoPrazo !== undefined) {
+                        return sac.dentroDoPrazo;
+                    }
+                    if (sac.dataFinalizacao) {
+                        const dataFinalizacao = new Date(sac.dataFinalizacao);
+                        dataFinalizacao.setHours(23, 59, 59, 999);
+                        return dataFinalizacao <= prazoCopy;
+                    }
+                    return true;
+                }
+                return prazoCopy >= hoje;
+            }).length;
+            return Math.round((onTime / data.length) * 100);
+        }
+
+        function calculateMonthlyPerformanceFromData(data) {
+            const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago'];
+            return months.map(month => {
+                const monthSacs = data.filter(sac => {
+                    const sacMonth = sac.abertura.toLocaleDateString('pt-BR', { month: 'short' });
+                    const monthKey = sacMonth.charAt(0).toUpperCase() + sacMonth.slice(1);
+                    return monthKey === month;
+                });
+                
+                if (monthSacs.length === 0) return 0;
+                const finalized = monthSacs.filter(sac => sac.finalizado).length;
+                return Math.round((finalized / monthSacs.length) * 100);
+            });
+        }
+
+        function calculateTypeAveragesFromData(data) {
+            const types = getAllTypes().filter(type => {
+                return data.some(sac => sac.tipo === type && sac.finalizado);
+            }).slice(0, 8);
+            
+            return types.map(type => {
+                const typeSacs = data.filter(sac => sac.tipo === type && sac.finalizado);
+                if (typeSacs.length === 0) return 0;
+                
+                const totalDays = typeSacs.reduce((sum, sac) => {
+                    if (sac.diasResolucao !== undefined) {
+                        return sum + sac.diasResolucao;
+                    }
+                    const diffTime = Math.abs(new Date() - sac.abertura);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return sum + diffDays;
+                }, 0);
+                
+                return Math.round((totalDays / typeSacs.length) * 10) / 10;
+            });
+        }
+
+        function updateMainMotivesWithFilter(filteredData) {
+            const motivesContainer = document.querySelector('#visao-geral-content .space-y-2');
+            
+            // Get type counts from filtered data and sort by frequency
+            const typeCounts = getAllTypes().map(type => ({
+                type,
+                count: filteredData.filter(sac => sac.tipo === type).length
+            })).filter(item => item.count > 0).sort((a, b) => b.count - a.count).slice(0, 8);
+            
+            if (typeCounts.length === 0) {
+                motivesContainer.innerHTML = `
+                    <div class="text-center py-4 text-gray-500">
+                        <p class="text-sm font-medium">Nenhum dado disponível</p>
+                        <p class="text-xs">Nenhum SAC encontrado para o período selecionado</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Generate colors for each type
+            const colors = [
+                { bg: 'bg-purple-100', text: 'text-purple-600' },
+                { bg: 'bg-blue-100', text: 'text-blue-600' },
+                { bg: 'bg-green-100', text: 'text-green-600' },
+                { bg: 'bg-yellow-100', text: 'text-yellow-600' },
+                { bg: 'bg-red-100', text: 'text-red-600' },
+                { bg: 'bg-indigo-100', text: 'text-indigo-600' },
+                { bg: 'bg-pink-100', text: 'text-pink-600' },
+                { bg: 'bg-teal-100', text: 'text-teal-600' }
+            ];
+            
+            motivesContainer.innerHTML = typeCounts.map((typeData, index) => `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-4 h-4 ${colors[index].bg} ${colors[index].text} rounded-full flex items-center justify-center text-xs font-bold">${index + 1}</span>
+                        <span class="text-xs font-medium text-gray-700">${typeData.type}</span>
+                    </div>
+                    <span class="text-xs font-bold text-gray-800">${typeData.count}</span>
+                </div>
+            `).join('');
+        }
+
+        function updateRankingWithFilter(filteredData) {
+            const types = ['NPP', 'Resultado', 'Agendamento', 'CLAV', 'Autorização'];
+            const rankingData = types.map(type => {
+                const typeSacs = filteredData.filter(sac => sac.tipo === type);
+                const finalized = typeSacs.filter(sac => sac.finalizado).length;
+                const rate = typeSacs.length > 0 ? Math.round((finalized / typeSacs.length) * 100) : 0;
+                const avgTime = calculateTypeAverageTimeFromData(filteredData, type);
+                
+                return {
+                    type,
+                    rate,
+                    avgTime,
+                    count: typeSacs.length
+                };
+            }).filter(item => item.count > 0).sort((a, b) => b.rate - a.rate);
+
+            const container = document.getElementById('rankingContainer');
+            
+            if (rankingData.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <svg class="w-8 h-8 text-gray-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>
+                        </svg>
+                        <p class="text-sm font-medium">Nenhum dado disponível</p>
+                        <p class="text-xs">Dados insuficientes para o período selecionado</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const colors = ['#00B3A6', '#004B8D', '#0093D0', '#F9B233', '#6E6E6E'];
+            const bgColors = ['from-teal-50 to-teal-100', 'from-blue-50 to-blue-100', 'from-sky-50 to-sky-100', 'from-yellow-50 to-yellow-100', 'from-gray-50 to-gray-100'];
+            
+            container.innerHTML = rankingData.map((item, index) => `
+                <div class="flex items-center justify-between p-2 bg-gradient-to-r ${bgColors[index] || 'from-gray-50 to-gray-100'} rounded-lg">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-5 h-5 text-white rounded-full flex items-center justify-center text-xs font-bold" style="background-color: ${colors[index] || '#6E6E6E'};">${index + 1}</span>
+                        <div>
+                            <p class="text-xs font-medium text-gray-800">${item.type}</p>
+                            <p class="text-xs text-gray-500">${item.avgTime} dias médio</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm font-bold" style="color: ${colors[index] || '#6E6E6E'};">${item.rate}%</p>
+                        <p class="text-xs text-gray-500">Taxa resolução</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function calculateTypeAverageTimeFromData(data, type) {
+            const typeSacs = data.filter(sac => sac.tipo === type && sac.finalizado);
+            if (typeSacs.length === 0) return 0;
+            
+            const totalDays = typeSacs.reduce((sum, sac) => {
+                if (sac.diasResolucao !== undefined) {
+                    return sum + sac.diasResolucao;
+                }
+                const diffTime = Math.abs(new Date() - sac.abertura);
+                const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                return sum + diffDays;
+            }, 0);
+            
+            return Math.round((totalDays / typeSacs.length) * 10) / 10;
+        }
+
+        function getMonthName(monthIndex) {
+            const months = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 
+                           'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+            return months[monthIndex] || 'Mês';
+        }
+
+        // Export to Excel function
+        function exportToExcel() {
+            // Get filtered data based on current filters
+            const monthFilter = document.getElementById('filterMonth').value;
+            const statusFilter = document.getElementById('filterStatus').value;
+            const typeFilter = document.getElementById('filterType').value;
+            const searchFilter = document.getElementById('filterSearch').value.toLowerCase();
+            
+            // Filter the data
+            let filteredData = sacData.filter(sac => {
+                // Month filter
+                if (monthFilter !== '' && sac.abertura.getMonth() !== parseInt(monthFilter)) {
+                    return false;
+                }
+                
+                // Status filter
+                if (statusFilter !== '') {
+                    const currentStatus = getStatusText(sac);
+                    if (currentStatus !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                // Type filter
+                if (typeFilter !== '' && sac.tipo !== typeFilter) {
+                    return false;
+                }
+                
+                // Search filter (ID)
+                if (searchFilter !== '' && !sac.id.toLowerCase().includes(searchFilter)) {
+                    return false;
+                }
+                
+                return true;
+            });
+
+            if (filteredData.length === 0) {
+                showExportMessage('Nenhum dado para exportar com os filtros aplicados.', 'warning');
+                return;
+            }
+
+            // Prepare clean data for Excel - only essential columns
+            const excelData = filteredData.map(sac => {
+                return {
+                    'ID SAC': sac.id,
+                    'Cliente': sac.cliente,
+                    'Tipo': sac.tipo,
+                    'Abertura': sac.abertura.toLocaleDateString('pt-BR'),
+                    'Prazo': sac.prazo.toLocaleDateString('pt-BR'),
+                    'Status': getStatusText(sac)
+                };
+            });
+
+            // Create clean CSV content with semicolon separator (better for Excel)
+            const headers = Object.keys(excelData[0]);
+            const csvRows = [
+                headers.join(';'), // Use semicolon for better Excel compatibility
+                ...excelData.map(row => 
+                    headers.map(header => {
+                        let value = row[header] || '';
+                        // Clean the value and wrap in quotes if needed
+                        value = String(value).replace(/"/g, '""');
+                        return `"${value}"`;
+                    }).join(';')
+                )
+            ];
+
+            const csvContent = csvRows.join('\r\n'); // Use Windows line endings
+            
+            // Add BOM for proper UTF-8 encoding in Excel
+            const BOM = '\uFEFF';
+            const csvWithBOM = BOM + csvContent;
+
+            // Create and download file
+            const blob = new Blob([csvWithBOM], { 
+                type: 'text/csv;charset=utf-8;' 
+            });
+            
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            
+            // Simple filename with date
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('pt-BR').replace(/\//g, '-');
+            const timeStr = now.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            }).replace(':', 'h');
+            
+            link.setAttribute('download', `SACs_${dateStr}_${timeStr}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Clean up
+            URL.revokeObjectURL(url);
+            
+            showExportMessage(`✅ Arquivo exportado! ${filteredData.length} SACs incluídos.`, 'success');
+        }
+
+        // Show export message function
+        function showExportMessage(message, type) {
+            // Remove existing message if any
+            const existingMessage = document.getElementById('exportMessage');
+            if (existingMessage) {
+                existingMessage.remove();
+            }
+
+            // Create message element
+            const messageDiv = document.createElement('div');
+            messageDiv.id = 'exportMessage';
+            messageDiv.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg max-w-sm transition-all duration-300 transform translate-x-full`;
+            
+            // Set colors based on type
+            let bgColor, textColor, iconSvg;
+            switch (type) {
+                case 'success':
+                    bgColor = 'bg-gradient-to-r from-green-500 to-green-600';
+                    textColor = 'text-white';
+                    iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>`;
+                    break;
+                case 'warning':
+                    bgColor = 'bg-gradient-to-r from-yellow-500 to-yellow-600';
+                    textColor = 'text-white';
+                    iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>`;
+                    break;
+                case 'error':
+                    bgColor = 'bg-gradient-to-r from-red-500 to-red-600';
+                    textColor = 'text-white';
+                    iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>`;
+                    break;
+                default:
+                    bgColor = 'bg-gradient-to-r from-blue-500 to-blue-600';
+                    textColor = 'text-white';
+                    iconSvg = `<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>`;
+            }
+
+            messageDiv.className += ` ${bgColor} ${textColor}`;
+            messageDiv.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                        ${iconSvg}
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium">${message}</p>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="flex-shrink-0 hover:bg-white hover:bg-opacity-20 rounded-full p-1 transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(messageDiv);
+
+            // Animate in
+            setTimeout(() => {
+                messageDiv.classList.remove('translate-x-full');
+                messageDiv.classList.add('translate-x-0');
+            }, 100);
+
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        if (messageDiv.parentElement) {
+                            messageDiv.remove();
+                        }
+                    }, 300);
+                }
+            }, 5000);
+        }
+
+
+
+        // Logo upload functionality
+        function handleLogoUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.type.startsWith('image/')) {
+                showExportMessage('Por favor, selecione apenas arquivos de imagem (PNG, JPG, etc.)', 'error');
+                return;
+            }
+            
+            // Validate file size (max 2MB)
+            if (file.size > 2 * 1024 * 1024) {
+                showExportMessage('O arquivo deve ter no máximo 2MB', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const logoContainer = document.getElementById('logoContainer');
+                
+                // Create image element
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                img.className = 'w-full h-full object-contain rounded-lg';
+                img.alt = 'Logo da empresa';
+                
+                // Replace container content with image
+                logoContainer.innerHTML = '';
+                logoContainer.appendChild(img);
+                
+                // Update container styling for image
+                logoContainer.className = 'w-12 h-12 bg-white rounded-xl flex items-center justify-center border-2 border-blue-300 shadow-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300';
+                
+                // Store logo in localStorage for persistence
+                localStorage.setItem('dashboardLogo', e.target.result);
+                
+                showExportMessage('Logo carregado com sucesso!', 'success');
+            };
+            
+            reader.onerror = function() {
+                showExportMessage('Erro ao carregar o arquivo. Tente novamente.', 'error');
+            };
+            
+            reader.readAsDataURL(file);
+        }
+        
+        // Load saved logo on page load
+        function loadSavedLogo() {
+            const savedLogo = localStorage.getItem('dashboardLogo');
+            if (savedLogo) {
+                const logoContainer = document.getElementById('logoContainer');
+                
+                const img = document.createElement('img');
+                img.src = savedLogo;
+                img.className = 'w-full h-full object-contain rounded-lg';
+                img.alt = 'Logo da empresa';
+                
+                logoContainer.innerHTML = '';
+                logoContainer.appendChild(img);
+                logoContainer.className = 'w-12 h-12 bg-white rounded-xl flex items-center justify-center border-2 border-blue-300 shadow-xl overflow-hidden cursor-pointer hover:scale-105 transition-transform duration-300';
+            }
+        }
+        
+        // Functions for managing custom types
+        function handleTipoChange(modalType) {
+            const selectElement = document.getElementById(modalType + 'SacTipoSelect') || document.getElementById(modalType + 'SacTipo');
+            const customInput = document.getElementById(modalType + 'SacTipoCustom');
+            const buttonsDiv = document.getElementById(modalType + 'SacTipoButtons');
+            
+            if (selectElement.value === '__novo__') {
+                // Show custom input and buttons
+                customInput.classList.remove('hidden');
+                buttonsDiv.classList.remove('hidden');
+                customInput.focus();
+                selectElement.value = '';
+            } else {
+                // Hide custom input and buttons
+                customInput.classList.add('hidden');
+                buttonsDiv.classList.add('hidden');
+                customInput.value = '';
+            }
+        }
+        
+        function confirmNewTipo(modalType) {
+            const customInput = document.getElementById(modalType + 'SacTipoCustom');
+            const newType = customInput.value.trim();
+            
+            if (!newType) {
+                showExportMessage('Por favor, digite um nome para o novo tipo', 'warning');
+                return;
+            }
+            
+            // Check if type already exists
+            const allTypes = ['Agendamento', 'Resultado', 'CLAV', 'NPP', 'Autorização', ...customTypes];
+            if (allTypes.includes(newType)) {
+                showExportMessage('Este tipo já existe!', 'error');
+                return;
+            }
+            
+            // Add to custom types
+            customTypes.push(newType);
+            localStorage.setItem('customSacTypes', JSON.stringify(customTypes));
+            
+            // Update all select elements
+            updateAllTypeSelects();
+            
+            // Set the new type as selected
+            const selectElement = document.getElementById(modalType + 'SacTipoSelect') || document.getElementById(modalType + 'SacTipo');
+            selectElement.value = newType;
+            
+            // Hide custom input
+            cancelNewTipo(modalType);
+            
+            showExportMessage(`Novo tipo "${newType}" criado com sucesso!`, 'success');
+        }
+        
+        function cancelNewTipo(modalType) {
+            const selectElement = document.getElementById(modalType + 'SacTipoSelect') || document.getElementById(modalType + 'SacTipo');
+            const customInput = document.getElementById(modalType + 'SacTipoCustom');
+            const buttonsDiv = document.getElementById(modalType + 'SacTipoButtons');
+            
+            // Reset select to empty
+            selectElement.value = '';
+            
+            // Hide custom input and buttons
+            customInput.classList.add('hidden');
+            buttonsDiv.classList.add('hidden');
+            customInput.value = '';
+        }
+        
+        function updateAllTypeSelects() {
+            const selectIds = ['newSacTipoSelect', 'editSacTipo', 'filterType'];
+            
+            selectIds.forEach(selectId => {
+                const selectElement = document.getElementById(selectId);
+                if (selectElement) {
+                    const currentValue = selectElement.value;
+                    
+                    // Clear existing custom options (keep default ones)
+                    const options = selectElement.querySelectorAll('option');
+                    options.forEach(option => {
+                        if (!['', 'Todos', 'Agendamento', 'Resultado', 'CLAV', 'NPP', 'Autorização', '__novo__'].includes(option.value)) {
+                            option.remove();
+                        }
+                    });
+                    
+                    // Add custom types
+                    customTypes.forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type;
+                        
+                        // Insert before the "Create New" option if it exists
+                        const createNewOption = selectElement.querySelector('option[value="__novo__"]');
+                        if (createNewOption) {
+                            selectElement.insertBefore(option, createNewOption);
+                        } else {
+                            selectElement.appendChild(option);
+                        }
+                    });
+                    
+                    // Restore previous value if it still exists
+                    if (currentValue && [...selectElement.options].some(opt => opt.value === currentValue)) {
+                        selectElement.value = currentValue;
+                    }
+                }
+            });
+        }
+        
+        function getAllTypes() {
+            return ['Agendamento', 'Resultado', 'CLAV', 'NPP', 'Autorização', ...customTypes];
+        }
+
+        // Delete All functionality
+        function openDeleteAllModal() {
+            // Update count in modal
+            document.getElementById('deleteAllCount').textContent = sacData.length;
+            
+            // Show modal
+            document.getElementById('deleteAllModal').classList.remove('hidden');
+            document.getElementById('deleteAllModal').classList.add('flex');
+            
+            // Clear form
+            document.getElementById('deleteAllPassword').value = '';
+            document.getElementById('confirmDeleteCheckbox').checked = false;
+        }
+
+        function closeDeleteAllModal() {
+            document.getElementById('deleteAllModal').classList.add('hidden');
+            document.getElementById('deleteAllModal').classList.remove('flex');
+        }
+
+        function confirmDeleteAll(event) {
+            event.preventDefault();
+            
+            const password = document.getElementById('deleteAllPassword').value;
+            const isChecked = document.getElementById('confirmDeleteCheckbox').checked;
+            
+            // Define a senha de segurança (você pode alterar aqui)
+            const SECURITY_PASSWORD = 'SADT';
+            
+            // Verificar senha
+            if (password !== SECURITY_PASSWORD) {
+                showExportMessage('❌ Senha incorreta! Acesso negado.', 'error');
+                
+                // Shake animation for wrong password
+                const passwordInput = document.getElementById('deleteAllPassword');
+                passwordInput.style.animation = 'shake 0.5s ease-in-out';
+                passwordInput.style.borderColor = '#ef4444';
+                
+                setTimeout(() => {
+                    passwordInput.style.animation = '';
+                    passwordInput.style.borderColor = '';
+                }, 500);
+                
+                return;
+            }
+            
+            // Verificar checkbox
+            if (!isChecked) {
+                showExportMessage('⚠️ Você deve confirmar que entende que a ação é irreversível', 'warning');
+                return;
+            }
+            
+            // Confirmar uma última vez
+            const finalConfirm = confirm(`🚨 ÚLTIMA CONFIRMAÇÃO 🚨\n\nVocê está prestes a excluir TODOS os ${sacData.length} SACs do sistema.\n\nEsta ação é IRREVERSÍVEL!\n\nTem certeza absoluta que deseja continuar?`);
+            
+            if (!finalConfirm) {
+                showExportMessage('✅ Operação cancelada. Dados preservados.', 'success');
+                closeDeleteAllModal();
+                return;
+            }
+            
+            // Executar exclusão
+            executeDeleteAll();
+        }
+
+        function executeDeleteAll() {
+            const totalSacs = sacData.length;
+            
+            // Limpar todos os dados
+            sacData = [];
+            monthlyStats = {
+                'Jan': 0, 'Fev': 0, 'Mar': 0, 'Abr': 0, 
+                'Mai': 0, 'Jun': 0, 'Jul': 0, 'Ago': 0
+            };
+            
+            // Limpar tipos customizados (opcional - descomente se quiser limpar também)
+            // customTypes = [];
+            // localStorage.removeItem('customSacTypes');
+            
+            // Atualizar interface
+            updateDashboard();
+            applyFilters(); // Atualizar tabela
+            
+            // Fechar modal
+            closeDeleteAllModal();
+            
+            // Mostrar confirmação com animação especial
+            showDeleteAllSuccess(totalSacs);
+        }
+
+        function showDeleteAllSuccess(deletedCount) {
+            // Criar mensagem especial para exclusão total
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50';
+            messageDiv.innerHTML = `
+                <div class="bg-white rounded-xl shadow-2xl p-8 max-w-md mx-4 text-center border-4 border-red-500">
+                    <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-bold text-red-800 mb-2">🗑️ EXCLUSÃO CONCLUÍDA</h3>
+                    <p class="text-gray-700 mb-4">
+                        <strong>${deletedCount} SACs</strong> foram permanentemente excluídos do sistema.
+                    </p>
+                    <p class="text-sm text-gray-600 mb-6">
+                        O dashboard foi resetado e está pronto para novos dados.
+                    </p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors">
+                        ✅ Entendido
+                    </button>
+                </div>
+            `;
+            
+            document.body.appendChild(messageDiv);
+            
+            // Auto-remove após 10 segundos
+            setTimeout(() => {
+                if (messageDiv.parentElement) {
+                    messageDiv.remove();
+                }
+            }, 10000);
+        }
+
+        // Add shake animation for wrong password
+        const shakeStyle = document.createElement('style');
+        shakeStyle.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(shakeStyle);
+
+        // Initialize dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSavedLogo();
+            updateAllTypeSelects(); // Load custom types
+            updateDashboard();
+        });
+
+        // Auto-update dashboard every 30 seconds
+        setInterval(updateDashboard, 30000);
+
+
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'993c76d176d28309',t:'MTc2MTM0MDI2MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
